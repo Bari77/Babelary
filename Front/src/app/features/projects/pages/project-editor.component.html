@@ -1,0 +1,148 @@
+<nav class="rail" [attr.aria-label]="language()">
+    <a class="back" [routerLink]="['/projet', slug()]" [matTooltip]="'PROJECT.EDITOR_BACK' | translate" [attr.aria-label]="'PROJECT.EDITOR_BACK' | translate">
+        <mat-icon>arrow_back</mat-icon>
+    </a>
+    <app-choice-menu
+        [label]="'PROJECT.SWITCH_LOCALE' | translate"
+        [value]="language()"
+        [current]="locale()"
+        [searchLabel]="'PROJECT.SWITCH_LOCALE_SEARCH' | translate"
+        [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
+        [options]="localeOptions()"
+        (picked)="openLocale($event)"
+    />
+    <app-choice-menu
+        [label]="'PROJECT.SWITCH_FILE' | translate"
+        [value]="file()"
+        [current]="file()"
+        [searchLabel]="'PROJECT.SWITCH_FILE_SEARCH' | translate"
+        [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
+        [options]="fileOptions()"
+        (picked)="openFile($event)"
+    />
+    <button
+        type="button"
+        class="export"
+        [disabled]="exporting()"
+        [matTooltip]="'PROJECT.EXPORT' | translate"
+        [attr.aria-label]="'PROJECT.EXPORT_LOCALE' | translate: { locale: locale() }"
+        (click)="download()"
+    >
+        <mat-icon>download</mat-icon>
+    </button>
+    @if (currentFile(); as item) {
+        <app-translation-meter
+            [translated]="item.translated"
+            [total]="item.total"
+            [pending]="item.pending"
+            [pendingOpen]="item.pendingOpen"
+            [chips]="false"
+        />
+        <span class="count">{{ item.covered() }} / {{ item.total }}</span>
+    }
+</nav>
+
+@if (projectsStore.error()) {
+    <p class="form-error">{{ projectsStore.error() }}</p>
+}
+
+<div class="toolbar">
+    <mat-form-field class="search" subscriptSizing="dynamic">
+        <mat-label>{{ "PROJECT.EDITOR_SEARCH" | translate }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput type="search" [value]="query()" (input)="onQuery($any($event.target).value)" />
+    </mat-form-field>
+    <div class="filters" role="group" [attr.aria-label]="'PROJECT.EDITOR_FILTERS' | translate">
+        @for (item of ["all", "empty", "identical", "review"]; track item) {
+            <button type="button" [class.active]="filter() === item" [attr.data-dot]="item" (click)="setFilter(item)">
+                {{ ("PROJECT.FILTER_" + item.toUpperCase()) | translate }}
+            </button>
+        }
+    </div>
+</div>
+
+@if (ready() && visible().length > 50) {
+    <app-list-pager
+        [length]="visible().length"
+        [pageIndex]="paging().page"
+        [pageSize]="pageSize()"
+        (pageChange)="pageIndex.set($event)"
+        (sizeChange)="setPageSize($event)"
+    />
+}
+
+@if (ready()) {
+<section class="keys">
+    @for (entry of pageEntries(); track entry.keyId) {
+        <article class="key">
+            <header>
+                <app-translation-status [status]="entry.status" />
+                <span class="path">{{ entry.path }}</span>
+                <span class="actions">
+                    <button
+                        mat-icon-button
+                        type="button"
+                        [disabled]="saving() === entry.keyId || control(entry).value.length === 0"
+                        [matTooltip]="'PROJECT.CLEAR' | translate"
+                        [attr.aria-label]="'PROJECT.CLEAR' | translate"
+                        (click)="clear(entry)"
+                    >
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                    <button
+                        mat-icon-button
+                        type="button"
+                        [disabled]="saving() === entry.keyId"
+                        [matTooltip]="(owner() ? 'GLOBAL.SAVE' : 'PROJECT.PROPOSE') | translate"
+                        [attr.aria-label]="(owner() ? 'GLOBAL.SAVE' : 'PROJECT.PROPOSE') | translate"
+                        (click)="save(entry)"
+                    >
+                        <mat-icon>{{ owner() ? "save" : "rate_review" }}</mat-icon>
+                    </button>
+                </span>
+            </header>
+            <p class="source">
+                <span class="source-label">{{ "PROJECT.EDITOR_SOURCE" | translate }}</span>
+                @for (part of parts(entry.sourceValue); track $index) {
+                    @if (part.token) {
+                        <span class="token">{{ part.text }}</span>
+                    } @else {
+                        <span>{{ part.text }}</span>
+                    }
+                }
+            </p>
+            <mat-form-field class="value" subscriptSizing="dynamic">
+                <mat-label>{{ "PROJECT.EDITOR_VALUE" | translate }}</mat-label>
+                <input matInput [formControl]="control(entry)" [attr.aria-label]="entry.path" />
+                <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    [disabled]="saving() === entry.keyId || control(entry).value === entry.sourceValue"
+                    [matTooltip]="'PROJECT.COPY_SOURCE' | translate"
+                    [attr.aria-label]="'PROJECT.COPY_SOURCE' | translate"
+                    (click)="copySource(entry)"
+                >
+                    <mat-icon>content_copy</mat-icon>
+                </button>
+            </mat-form-field>
+            @if (rowError()[entry.keyId]) {
+                <p class="form-error">{{ rowError()[entry.keyId] }}</p>
+            }
+        </article>
+    } @empty {
+        @if (!projectsStore.error()) {
+            <p class="empty">{{ "PROJECT.EDITOR_EMPTY" | translate }}</p>
+        }
+    }
+</section>
+@if (visible().length > 50) {
+    <app-list-pager
+        [length]="visible().length"
+        [pageIndex]="paging().page"
+        [pageSize]="pageSize()"
+        (pageChange)="pageIndex.set($event)"
+        (sizeChange)="setPageSize($event)"
+    />
+}
+}

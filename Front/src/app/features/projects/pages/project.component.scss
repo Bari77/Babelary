@@ -1,0 +1,48 @@
+.project-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0;
+    overflow: hidden;
+}
+
+nav[mat-tab-nav-bar] {
+    flex: 0 0 auto;
+}
+
+mat-tab-nav-panel {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: clip;
+    overflow-y: auto;
+    padding-top: 16px;
+}
+
+a[mat-tab-link] mat-icon {
+    margin-inline-end: 8px;
+    vertical-align: middle;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+a[mat-tab-link].icon-only mat-icon {
+    margin-inline-end: 0;
+}
+
+.tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    margin-inline-start: 8px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--status-proposal-bg);
+    color: var(--status-proposal);
+    font: var(--mat-sys-label-small);
+    vertical-align: middle;
+}

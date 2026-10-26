@@ -1,0 +1,90 @@
+:host {
+    display: block;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.languages {
+    display: grid;
+}
+
+.lang-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.lang-head .lang-row {
+    flex: 1;
+    min-width: 0;
+    border-bottom: 0;
+}
+
+.export {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding: 4px;
+    border: 0;
+    background: transparent;
+    color: var(--mat-sys-primary);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.export:disabled {
+    opacity: 0.38;
+    cursor: default;
+}
+
+.export mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+.lang-row,
+.file-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.2fr) auto minmax(5rem, 1fr) auto;
+    gap: 8px 12px;
+    align-items: center;
+    width: 100%;
+    padding: 6px 0;
+    border: 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    text-decoration: none;
+}
+
+button.lang-row,
+.file-row {
+    cursor: pointer;
+}
+
+.lang-name {
+    font: var(--mat-sys-body-medium);
+}
+
+.lang-count {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+}
+
+.files {
+    display: grid;
+    padding-left: 16px;
+}
+
+.empty {
+    margin: 8px 0 0;
+    color: var(--mat-sys-on-surface-variant);
+}

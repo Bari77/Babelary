@@ -1,0 +1,33 @@
+name: CI - Back (.NET 10)
+
+on:
+    pull_request:
+        paths:
+            - "Back/**"
+            - ".github/workflows/back-ci.yml"
+    workflow_dispatch:
+
+jobs:
+    build:
+        name: Build, test, format
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup .NET 10
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "10.0.x"
+
+            - name: Build
+              working-directory: Back
+              run: dotnet build Babelary.Back.slnx --configuration Release
+
+            - name: Test
+              working-directory: Back
+              run: dotnet test Babelary.Back.slnx --configuration Release --no-build
+
+            - name: Format
+              working-directory: Back
+              run: dotnet format Babelary.Back.slnx --verify-no-changes

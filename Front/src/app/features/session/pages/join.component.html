@@ -1,0 +1,113 @@
+<div class="auth-page">
+    <mat-card class="auth-card">
+        <mat-card-header>
+            <mat-card-title>{{ "JOIN.TITLE" | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @if (projectsStore.joinError(); as error) {
+                <p class="form-error">{{ error }}</p>
+            }
+
+            @if (preview(); as invite) {
+                <p class="lead">{{ "JOIN.LEAD" | translate: { email: invite.email, project: invite.projectName } }}</p>
+                <p class="hint">{{ "JOIN.LOCALES" | translate: { names: names() } }}</p>
+
+                @if (sameAccount()) {
+                    <button mat-flat-button type="button" [disabled]="projectsStore.pending()" (click)="enter()">
+                        @if (projectsStore.pending()) {
+                            <mat-spinner diameter="18" />
+                        } @else {
+                            {{ "JOIN.ACCEPT" | translate }}
+                        }
+                    </button>
+                } @else if (creating() && !invite.accountExists) {
+                    @if (signedInEmail()) {
+                        <p class="hint">{{ "JOIN.SWITCH" | translate: { name: sessionStore.account()?.name } }}</p>
+                    }
+                    <form [formGroup]="createForm" (ngSubmit)="create()">
+                        <mat-form-field>
+                            <mat-label>{{ "GLOBAL.EMAIL" | translate }}</mat-label>
+                            <input matInput [value]="invite.email" disabled />
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>{{ "GLOBAL.NAME" | translate }}</mat-label>
+                            <input matInput formControlName="name" autocomplete="name" />
+                            @if (createForm.controls.name.invalid && createForm.controls.name.touched) {
+                                <mat-error>{{ "ERROR.ERR_NAME_REQUIRED" | translate }}</mat-error>
+                            }
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>{{ "GLOBAL.PASSWORD" | translate }}</mat-label>
+                            <input
+                                matInput
+                                [type]="hidePassword() ? 'password' : 'text'"
+                                formControlName="password"
+                                autocomplete="new-password"
+                            />
+                            <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                (click)="hidePassword.set(!hidePassword())"
+                                [attr.aria-label]="'GLOBAL.PASSWORD' | translate"
+                            >
+                                <mat-icon>{{ hidePassword() ? "visibility" : "visibility_off" }}</mat-icon>
+                            </button>
+                            <mat-hint>{{ "SETUP.PASSWORD_HINT" | translate }}</mat-hint>
+                            @if (createForm.controls.password.hasError("minlength") && createForm.controls.password.touched) {
+                                <mat-error>{{ "ERROR.ERR_PASSWORD_TOO_SHORT" | translate }}</mat-error>
+                            }
+                        </mat-form-field>
+                        <button mat-flat-button type="submit" [disabled]="projectsStore.pending()">
+                            @if (projectsStore.pending()) {
+                                <mat-spinner diameter="18" />
+                            } @else {
+                                {{ "JOIN.SUBMIT" | translate }}
+                            }
+                        </button>
+                    </form>
+                    <button mat-button type="button" (click)="showLogin()">{{ "JOIN.HAVE_ACCOUNT" | translate }}</button>
+                } @else {
+                    <p>{{ "JOIN.LOGIN" | translate }}</p>
+                    <form [formGroup]="loginForm" (ngSubmit)="login()">
+                        <mat-form-field>
+                            <mat-label>{{ "GLOBAL.EMAIL" | translate }}</mat-label>
+                            <input matInput [value]="invite.email" disabled />
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>{{ "GLOBAL.PASSWORD" | translate }}</mat-label>
+                            <input
+                                matInput
+                                [type]="hidePassword() ? 'password' : 'text'"
+                                formControlName="password"
+                                autocomplete="current-password"
+                            />
+                            <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                (click)="hidePassword.set(!hidePassword())"
+                                [attr.aria-label]="'GLOBAL.PASSWORD' | translate"
+                            >
+                                <mat-icon>{{ hidePassword() ? "visibility" : "visibility_off" }}</mat-icon>
+                            </button>
+                        </mat-form-field>
+                        @if (sessionStore.error()) {
+                            <p class="form-error">{{ sessionStore.error() }}</p>
+                        }
+                        <button mat-flat-button type="submit" [disabled]="sessionStore.pending() || projectsStore.pending()">
+                            @if (sessionStore.pending() || projectsStore.pending()) {
+                                <mat-spinner diameter="18" />
+                            } @else {
+                                {{ "LOGIN.SUBMIT" | translate }}
+                            }
+                        </button>
+                    </form>
+                    @if (!invite.accountExists) {
+                        <button mat-button type="button" (click)="showCreate()">{{ "JOIN.CREATE" | translate }}</button>
+                    }
+                }
+            }
+        </mat-card-content>
+    </mat-card>
+</div>

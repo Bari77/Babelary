@@ -1,0 +1,25 @@
+:host {
+    display: block;
+}
+
+.settings {
+    display: grid;
+    gap: 16px;
+}
+
+form {
+    display: grid;
+    gap: 4px;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.empty {
+    margin: 0;
+}

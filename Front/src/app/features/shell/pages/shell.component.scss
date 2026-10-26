@@ -1,0 +1,233 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+mat-sidenav-container {
+    height: 100%;
+}
+
+mat-sidenav {
+    box-sizing: border-box;
+    width: 240px;
+    border: 0;
+    box-shadow: inset -1px 0 0 var(--mat-sys-outline-variant);
+
+    &.collapsed {
+        width: 72px;
+    }
+}
+
+mat-sidenav-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+mat-toolbar {
+    flex: 0 0 64px;
+}
+
+:host ::ng-deep mat-sidenav-content > router-outlet + * {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+:host ::ng-deep mat-sidenav-content > router-outlet + .project-frame {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    height: 100%;
+    padding: 12px;
+}
+
+.brand,
+:host ::ng-deep mat-nav-list .mdc-list-item {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.brand-home {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    margin-inline: 12px 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    flex: 0 0 auto;
+    cursor: pointer;
+}
+
+button.mark::after {
+    content: "";
+    position: absolute;
+    inset: -12px -16px;
+}
+
+.mark img,
+.mark-arrow {
+    grid-area: 1 / 1;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+.mark-arrow {
+    opacity: 0;
+}
+
+.mark:hover .mark-logo,
+.mark:focus-visible .mark-logo {
+    opacity: 0;
+}
+
+.mark:hover .mark-arrow,
+.mark:focus-visible .mark-arrow {
+    opacity: 1;
+}
+
+.brand-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+}
+
+.collapse {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-inline-start: auto;
+    margin-inline-end: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.collapse::after {
+    content: "";
+    position: absolute;
+    inset: -12px 0 -12px -16px;
+}
+
+.collapse mat-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+mat-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+}
+
+.crumbs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    font: var(--mat-sys-title-medium);
+}
+
+.crumbs a {
+    color: var(--mat-sys-on-surface-variant);
+    text-decoration: none;
+}
+
+.crumb-current {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.crumb-sep {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+.account-name {
+    margin-inline-end: 16px;
+}
+
+:host ::ng-deep mat-nav-list {
+    .mat-mdc-list-item-icon,
+    .mdc-list-item__start {
+        margin-inline: 12px 8px;
+        width: 24px;
+        height: 24px;
+    }
+}
+
+:host ::ng-deep mat-sidenav .mat-drawer-inner-container {
+    overflow-x: hidden;
+}
+
+:host ::ng-deep mat-sidenav.collapsed {
+    .mark {
+        margin-inline: auto;
+    }
+
+    .mdc-list-item {
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .mdc-list-item__content {
+        display: none;
+    }
+
+    .mat-mdc-list-item-icon,
+    .mdc-list-item__start {
+        margin-inline: 0;
+    }
+}

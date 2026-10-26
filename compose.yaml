@@ -1,0 +1,76 @@
+# Dev stack. network_mode host makes the ports visible on Windows:
+# Podman publishes them with NAT, and WSL only forwards real listeners.
+services:
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    network_mode: host
+    environment:
+      POSTGRES_USER: babelary
+      POSTGRES_PASSWORD: babelary
+      POSTGRES_DB: babelary
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U babelary -d babelary"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./Back
+      dockerfile: Containerfile
+    network_mode: host
+    working_dir: /workspace
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      ConnectionStrings__Database: Host=127.0.0.1;Port=5432;Database=babelary;Username=babelary;Password=babelary
+    volumes:
+      - ./Back:/workspace
+      - nuget:/root/.nuget/packages
+      - /workspace/Api/bin
+      - /workspace/Api/obj
+      - /workspace/Core/bin
+      - /workspace/Core/obj
+      - /workspace/Application/bin
+      - /workspace/Application/obj
+      - /workspace/Infrastructure/bin
+      - /workspace/Infrastructure/obj
+      - /workspace/Cli/bin
+      - /workspace/Cli/obj
+      - /workspace/Application.Tests/bin
+      - /workspace/Application.Tests/obj
+    command:
+      - sh
+      - -lc
+      - dotnet restore Api/Api.csproj && dotnet watch --non-interactive --project Api/Api.csproj run --urls http://0.0.0.0:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./Front
+      dockerfile: Containerfile
+    network_mode: host
+    working_dir: /app
+    environment:
+      NG_CLI_ANALYTICS: "false"
+    volumes:
+      - ./Front/src:/app/src
+      - ./Front/public:/app/public
+      - ./Front/angular.json:/app/angular.json
+      - ./Front/proxy.conf.js:/app/proxy.conf.js
+    command: ["bun", "run", "start"]
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  nuget:

@@ -1,0 +1,103 @@
+@if (routeSlug() && !owner()) {
+    <p class="empty">{{ "PROJECT.SOURCE_FORBIDDEN" | translate }}</p>
+} @else {
+<div class="settings">
+    <mat-card class="general">
+        <mat-card-header>
+            <mat-card-title>{{ "PROJECT.GENERAL" | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <form [formGroup]="form" (ngSubmit)="save()">
+                <mat-form-field>
+                    <mat-label>{{ "PROJECT.SLUG" | translate }}</mat-label>
+                    <input matInput formControlName="slug" autocomplete="off" />
+                    <mat-hint>{{ "PROJECT.SLUG_HINT" | translate }}</mat-hint>
+                    @if (form.controls.slug.hasError("required")) {
+                        <mat-error>{{ "ERROR.ERR_PROJECT_SLUG_REQUIRED" | translate }}</mat-error>
+                    } @else if (form.controls.slug.hasError("pattern") || form.controls.slug.hasError("maxlength")) {
+                        <mat-error>{{ "ERROR.ERR_PROJECT_SLUG_INVALID" | translate }}</mat-error>
+                    }
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>{{ "PROJECT.NAME" | translate }}</mat-label>
+                    <input matInput formControlName="name" />
+                    @if (form.controls.name.hasError("required")) {
+                        <mat-error>{{ "ERROR.ERR_NAME_REQUIRED" | translate }}</mat-error>
+                    } @else if (form.controls.name.hasError("maxlength")) {
+                        <mat-error>{{ "ERROR.ERR_NAME_TOO_LONG" | translate }}</mat-error>
+                    }
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>{{ "PROJECT.SOURCE" | translate }}</mat-label>
+                    <mat-select
+                        formControlName="sourceLocale"
+                        panelClass="locale-panel"
+                        (openedChange)="onLocalePanel($event, localeSearch)"
+                    >
+                        <mat-select-trigger>{{ localesStore.label(form.controls.sourceLocale.value) }}</mat-select-trigger>
+                        <mat-option class="locale-search-option" disabled>
+                            <input
+                                #localeSearch
+                                class="locale-search"
+                                type="text"
+                                autocomplete="off"
+                                [attr.placeholder]="'PROJECT.SOURCE_SEARCH' | translate"
+                                [attr.aria-label]="'PROJECT.SOURCE_SEARCH' | translate"
+                                (input)="onSearch($event)"
+                                (keydown)="onSearchKey($event)"
+                                (click)="$event.stopPropagation()"
+                                (mousedown)="$event.stopPropagation()"
+                            />
+                        </mat-option>
+                        @for (locale of filteredLocales(); track locale.code) {
+                            <mat-option [value]="locale.code">{{ locale.label }}</mat-option>
+                        }
+                        @if (filteredLocales().length === 0) {
+                            <mat-option disabled>{{ "PROJECT.SOURCE_EMPTY" | translate }}</mat-option>
+                        }
+                    </mat-select>
+                    @if (form.controls.sourceLocale.disabled) {
+                        <mat-hint>{{ "PROJECT.SOURCE_LOCKED" | translate }}</mat-hint>
+                    } @else {
+                        <mat-hint>{{ "PROJECT.SOURCE_HINT" | translate }}</mat-hint>
+                    }
+                    @if (form.controls.sourceLocale.hasError("required") || form.controls.sourceLocale.hasError("locale")) {
+                        <mat-error>{{ "ERROR.ERR_LOCALE_INVALID" | translate }}</mat-error>
+                    }
+                </mat-form-field>
+                @if (projectsStore.error()) {
+                    <p class="form-error">{{ projectsStore.error() }}</p>
+                }
+                <div class="actions">
+                    <button mat-flat-button type="submit" [disabled]="projectsStore.pending()">
+                        @if (projectsStore.pending()) {
+                            <mat-spinner diameter="18" />
+                        } @else {
+                            {{ "GLOBAL.SAVE" | translate }}
+                        }
+                    </button>
+                    @if (!creating()) {
+                        <button mat-flat-button type="button" class="danger" [disabled]="projectsStore.pending()" (click)="reset()">
+                            {{ "PROJECT.RESET" | translate }}
+                        </button>
+                        <button mat-flat-button type="button" class="danger" [disabled]="projectsStore.pending()" (click)="remove()">
+                            {{ "PROJECT.DELETE" | translate }}
+                        </button>
+                    }
+                </div>
+            </form>
+        </mat-card-content>
+    </mat-card>
+
+    @if (!creating()) {
+        <mat-card>
+            <mat-card-header>
+                <mat-card-title>{{ "PROJECT.TARGETS" | translate }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+                <app-target-languages />
+            </mat-card-content>
+        </mat-card>
+    }
+</div>
+}

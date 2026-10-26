@@ -1,0 +1,74 @@
+@if (projectsStore.error() && !openLocale()) {
+    <p class="form-error">{{ projectsStore.error() }}</p>
+}
+
+@if (project(); as project) {
+    <div class="legend">
+        @for (item of ["translated", "identical", "empty", "review"]; track item) {
+            <app-translation-status [status]="item" />
+        }
+    </div>
+    <section class="languages">
+        @for (row of rows(project); track row.locale) {
+            <div class="lang-block">
+                <div class="lang-head">
+                    <button
+                        type="button"
+                        class="lang-row"
+                        [attr.aria-expanded]="openLocale() === row.locale"
+                        (click)="toggle(project.slug, row.locale)"
+                    >
+                        <span class="lang-name">{{ localesStore.label(row.locale) }}</span>
+                        <span class="lang-count">{{ row.covered() }} / {{ row.total }}</span>
+                        <app-translation-meter
+                            [translated]="row.translated"
+                            [total]="row.total"
+                            [pending]="row.pending"
+                            [pendingOpen]="row.pendingOpen"
+                            [chips]="false"
+                        />
+                        <mat-icon>{{ openLocale() === row.locale ? "expand_less" : "expand_more" }}</mat-icon>
+                    </button>
+                    <button
+                        type="button"
+                        class="export"
+                        [disabled]="exporting() === row.locale"
+                        [matTooltip]="'PROJECT.EXPORT' | translate"
+                        [attr.aria-label]="'PROJECT.EXPORT_LOCALE' | translate: { locale: row.locale }"
+                        (click)="download(project.slug, row.locale)"
+                    >
+                        <mat-icon>download</mat-icon>
+                    </button>
+                </div>
+                @if (openLocale() === row.locale) {
+                    <div class="files">
+                        @if (projectsStore.error()) {
+                            <p class="form-error">{{ projectsStore.error() }}</p>
+                        }
+                        @for (file of projectsStore.fileProgress(); track file.name) {
+                            <a class="file-row" [routerLink]="['/projet', project.slug, 'editeur', row.locale, file.name]">
+                                <span class="lang-name">{{ file.name }}</span>
+                                <span class="lang-count">{{ file.covered() }} / {{ file.total }}</span>
+                                <app-translation-meter
+                                    [translated]="file.translated"
+                                    [total]="file.total"
+                                    [pending]="file.pending"
+                                    [pendingOpen]="file.pendingOpen"
+                                    [chips]="false"
+                                />
+                                <mat-icon>chevron_right</mat-icon>
+                            </a>
+                        } @empty {
+                            @if (!projectsStore.error()) {
+                                <p class="empty">{{ "PROJECT.LANGUAGE_EMPTY" | translate }}</p>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
+        @if (project.targets.length === 0) {
+            <p class="empty">{{ "PROJECT.TARGETS_EMPTY" | translate }}</p>
+        }
+    </section>
+}

@@ -1,0 +1,113 @@
+@if (!owner()) {
+    <p class="empty">{{ "PROJECT.SOURCE_FORBIDDEN" | translate }}</p>
+} @else {
+    @if (projectsStore.error()) {
+        <p class="form-error">{{ projectsStore.error() }}</p>
+    }
+
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>{{ "PROJECT.INVITE" | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="members">
+            <p class="lead">{{ "PROJECT.INVITE_LEAD" | translate }}</p>
+            <form [formGroup]="form" (ngSubmit)="invite()">
+                <mat-form-field>
+                    <mat-label>{{ "GLOBAL.EMAIL" | translate }}</mat-label>
+                    <input matInput type="email" formControlName="email" autocomplete="off" />
+                    @if (form.controls.email.invalid && form.controls.email.touched) {
+                        <mat-error>{{ "ERROR.ERR_EMAIL_INVALID" | translate }}</mat-error>
+                    }
+                </mat-form-field>
+
+                <fieldset class="locales">
+                    <legend>{{ "PROJECT.MEMBER_LOCALES" | translate }}</legend>
+                    @for (locale of project()?.targets ?? []; track locale) {
+                        <mat-checkbox
+                            [checked]="inviteLocales().includes(locale)"
+                            (change)="toggleInvite(locale, $event.checked)"
+                        >
+                            {{ localesStore.label(locale) }}
+                        </mat-checkbox>
+                    } @empty {
+                        <p class="hint">{{ "PROJECT.TARGETS_EMPTY" | translate }}</p>
+                    }
+                </fieldset>
+
+                <button mat-flat-button type="submit" [disabled]="projectsStore.pending() || inviteLocales().length === 0">
+                    {{ "PROJECT.INVITE_SUBMIT" | translate }}
+                </button>
+            </form>
+
+            @if (link(); as share) {
+                <div class="share">
+                    <p class="lead">{{ "PROJECT.INVITE_ONCE" | translate }}</p>
+                    <div class="share-row">
+                        <input readonly [value]="share" [attr.aria-label]="'PROJECT.INVITE' | translate" />
+                        <button mat-icon-button type="button" (click)="copy()" [attr.aria-label]="'GLOBAL.COPY' | translate">
+                            <mat-icon>content_copy</mat-icon>
+                        </button>
+                    </div>
+                    @if (copied()) {
+                        <p class="hint">{{ "GLOBAL.COPIED" | translate }}</p>
+                    }
+                </div>
+            }
+        </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>{{ "PROJECT.INVITES" | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @for (invite of projectsStore.invites(); track invite.id) {
+                <article class="row">
+                    <div>
+                        <div class="title">{{ invite.email }}</div>
+                        <div class="hint">{{ names(invite.locales) }}</div>
+                        <div class="hint">{{ "PROJECT.INVITE_EXPIRES" | translate: { date: (invite.expiresAt | date: "d MMMM y") } }}</div>
+                    </div>
+                    <button mat-button type="button" (click)="revoke(invite.id)">{{ "PROJECT.INVITE_CANCEL" | translate }}</button>
+                </article>
+            } @empty {
+                <p class="empty">{{ "PROJECT.INVITES_EMPTY" | translate }}</p>
+            }
+        </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>{{ "PROJECT.MEMBERS" | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            @for (member of projectsStore.members(); track member.accountId) {
+                <article class="row">
+                    <div>
+                        <div class="title">{{ member.name }}</div>
+                        <div class="hint">{{ member.email }}</div>
+                        <div class="hint">{{ names(member.locales) }}</div>
+                    </div>
+                    <div class="actions">
+                        <button mat-button type="button" (click)="startEdit(member)">{{ "PROJECT.MEMBER_EDIT" | translate }}</button>
+                        <button mat-button type="button" (click)="remove(member)">{{ "PROJECT.REMOVE_MEMBER" | translate }}</button>
+                    </div>
+                </article>
+                @if (editing() === member.accountId) {
+                    <div class="edit">
+                        @for (locale of project()?.targets ?? []; track locale) {
+                            <mat-checkbox [checked]="editLocales().includes(locale)" (change)="toggleEdit(locale, $event.checked)">
+                                {{ localesStore.label(locale) }}
+                            </mat-checkbox>
+                        }
+                        <button mat-flat-button type="button" [disabled]="editLocales().length === 0" (click)="saveEdit()">
+                            {{ "PROJECT.MEMBER_SAVE" | translate }}
+                        </button>
+                    </div>
+                }
+            } @empty {
+                <p class="empty">{{ "PROJECT.MEMBERS_EMPTY" | translate }}</p>
+            }
+        </mat-card-content>
+    </mat-card>
+}

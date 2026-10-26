@@ -1,0 +1,103 @@
+<mat-sidenav-container autosize>
+    <mat-sidenav
+        #nav
+        [mode]="handset() ? 'over' : 'side'"
+        [opened]="!handset()"
+        [class.collapsed]="iconOnly()"
+    >
+        <div class="nav">
+            <div class="brand">
+                @if (iconOnly()) {
+                    <button
+                        class="mark"
+                        type="button"
+                        (click)="toggleCollapsed()"
+                        [matTooltip]="'GLOBAL.EXPAND_MENU' | translate"
+                        matTooltipPosition="right"
+                        [attr.aria-label]="'GLOBAL.EXPAND_MENU' | translate"
+                    >
+                        <img class="mark-logo" src="logo.png" alt="" width="24" height="24" />
+                        <mat-icon class="mark-arrow" aria-hidden="true">chevron_right</mat-icon>
+                    </button>
+                } @else {
+                    <a class="brand-home" routerLink="/" (click)="closeIfHandset(nav)">
+                        <span class="mark">
+                            <img src="logo.png" alt="" width="24" height="24" />
+                        </span>
+                        <span class="brand-title">{{ "GLOBAL.TITLE" | translate }}</span>
+                    </a>
+                    @if (!handset()) {
+                        <button
+                            class="collapse"
+                            type="button"
+                            (click)="toggleCollapsed()"
+                            [matTooltip]="'GLOBAL.COLLAPSE_MENU' | translate"
+                            [attr.aria-label]="'GLOBAL.COLLAPSE_MENU' | translate"
+                        >
+                            <mat-icon>chevron_left</mat-icon>
+                        </button>
+                    }
+                }
+            </div>
+            <mat-nav-list>
+                <a
+                    mat-list-item
+                    routerLink="/"
+                    routerLinkActive="mdc-list-item--activated"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    [attr.aria-label]="'GLOBAL.PROJECTS' | translate"
+                    [matTooltip]="iconOnly() ? ('GLOBAL.PROJECTS' | translate) : ''"
+                    matTooltipPosition="right"
+                    (click)="closeIfHandset(nav)"
+                >
+                    <mat-icon matListItemIcon>folder</mat-icon>
+                    <span matListItemTitle>{{ "GLOBAL.PROJECTS" | translate }}</span>
+                </a>
+                <a
+                    mat-list-item
+                    routerLink="/profil"
+                    routerLinkActive="mdc-list-item--activated"
+                    [attr.aria-label]="'GLOBAL.PROFILE' | translate"
+                    [matTooltip]="iconOnly() ? ('GLOBAL.PROFILE' | translate) : ''"
+                    matTooltipPosition="right"
+                    (click)="closeIfHandset(nav)"
+                >
+                    <mat-icon matListItemIcon>person</mat-icon>
+                    <span matListItemTitle>{{ "GLOBAL.PROFILE" | translate }}</span>
+                </a>
+            </mat-nav-list>
+        </div>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+        <mat-toolbar>
+            @if (handset()) {
+                <button mat-icon-button type="button" (click)="nav.toggle()">
+                    <mat-icon>menu</mat-icon>
+                </button>
+            }
+            <nav class="crumbs" [attr.aria-label]="'GLOBAL.BREADCRUMB' | translate">
+                @for (crumb of crumbs(); track crumb.path; let last = $last) {
+                    @if (!last) {
+                        <a [routerLink]="crumb.path">{{ crumb.text ?? (crumb.key | translate) }}</a>
+                        <mat-icon class="crumb-sep" aria-hidden="true">chevron_right</mat-icon>
+                    } @else {
+                        <span class="crumb-current" aria-current="page">{{ crumb.text ?? (crumb.key | translate) }}</span>
+                    }
+                }
+            </nav>
+            <span class="toolbar-spacer"></span>
+            <span class="account-name">{{ sessionStore.account()?.name }}</span>
+            <button
+                mat-icon-button
+                type="button"
+                (click)="logout()"
+                [matTooltip]="'GLOBAL.LOGOUT' | translate"
+                [attr.aria-label]="'GLOBAL.LOGOUT' | translate"
+            >
+                <mat-icon>logout</mat-icon>
+            </button>
+        </mat-toolbar>
+        <router-outlet />
+    </mat-sidenav-content>
+</mat-sidenav-container>

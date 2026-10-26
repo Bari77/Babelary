@@ -1,0 +1,15 @@
+---
+description: Vocabulaire, périmètre v1 et stack de Babelary
+alwaysApply: true
+---
+
+# Babelary
+
+Les specs dans `specs/` font foi. Vocabulaire : instance, propriétaire d'instance, projet, membre, langue source, langue cible, fichier, clé, valeur.
+
+- L'interface du site est en français. Les textes traduits sont des données : les afficher tels quels, un `<` reste un `<`.
+- Format v1 : JSON imbriqué, feuilles chaînes, locales `xx-XX`.
+- Le CLI pousse et tire des fichiers. `concat` travaille sur le disque et n'appelle pas le serveur.
+- Hors v1 : traduction automatique, quota, YAML/XLIFF, commentaires, plusieurs propriétaires.
+
+Stack : .NET 10, Angular 21, Angular Material, PostgreSQL 17, EF Core, Podman. Le mot de passe et `BABELARY_TOKEN` ne vont jamais dans un log ni dans `babelary.yml`.

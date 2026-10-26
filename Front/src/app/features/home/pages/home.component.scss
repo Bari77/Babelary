@@ -1,0 +1,40 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+.list-head {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.projects {
+    width: 100%;
+    background: transparent;
+}
+
+.projects tr[mat-row] {
+    cursor: pointer;
+}
+
+.progress-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 9rem;
+}
+
+.progress-cell app-translation-meter {
+    flex: 1;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status p {
+    margin: 0;
+    flex: 1;
+}

@@ -1,0 +1,35 @@
+---
+description: Conventions backend .NET de Babelary
+globs: Back/**/*.cs
+alwaysApply: false
+---
+
+# Backend
+
+Couches : `Api` → `Application` → `Core` ← `Infrastructure`. Les interfaces et DTO vivent dans `Core`. `Application` ne référence pas `Infrastructure`. L'enregistrement se fait dans `Api/InitIoC.cs`.
+
+Contrôleurs minces, une action nommée, paramètres en query string :
+
+```csharp
+[ApiController]
+[Route("api/v1/[controller]")]
+public class ProjectsController(IProjects projects) : ControllerBase
+{
+    [HttpGet("get")]
+    public Task<ProjectDto> Get(string project, CancellationToken token)
+        => projects.GetAsync(project, token);
+}
+```
+
+- Méthodes `async`. Dates en UTC.
+- Schéma uniquement par migration EF. Pas d'évaluation client LINQ.
+- Erreur métier : exception `IAppException` dont le message est un code `ERR_*`. Le middleware écrit `ExceptionResult` en PascalCase (`Message`, `TraceId`).
+- Mot de passe : `PasswordHasher<T>` (PBKDF2), 12 caractères minimum. Jeton CLI : stocker seulement son empreinte, le montrer une fois.
+- Session web : cookie `HttpOnly`, 30 jours. Le CLI envoie `Authorization: Bearer`.
+- XML doc en anglais sur les types publics. Identifiants en anglais, messages CLI en français.
+- Nouveau service : contrat `Core`, implémentation, `InitIoC`, endpoint, migration, test xUnit du comportement.
+
+```csharp
+// ❌ chemin /projects/{id} ou Task.Run autour d'un appel synchrone
+// ✅ GET api/v1/Projects/get?project=kert-front
+```

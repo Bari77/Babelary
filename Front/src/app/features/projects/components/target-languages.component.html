@@ -1,0 +1,96 @@
+<mat-form-field class="search">
+    <mat-label>{{ "PROJECT.TARGETS_SEARCH" | translate }}</mat-label>
+    <input
+        matInput
+        type="text"
+        autocomplete="off"
+        [value]="query()"
+        (input)="onQuery($any($event.target).value)"
+    />
+    <mat-icon matPrefix>search</mat-icon>
+</mat-form-field>
+
+@if (projectsStore.error()) {
+    <p class="form-error">{{ projectsStore.error() }}</p>
+}
+
+<div class="picker" [class.stacked]="handset()">
+    <section class="board">
+        <header class="board-head">
+            <h3>{{ "PROJECT.TARGETS_AVAILABLE" | translate }}</h3>
+            <span class="count">{{ lists().available.length }}</span>
+        </header>
+        <mat-selection-list
+            #availableList
+            multiple
+            (selectionChange)="onAvailableSelection(availableList)"
+        >
+            @for (locale of lists().available; track locale.code) {
+                <mat-list-option [value]="locale.code" togglePosition="before">{{ locale.label }}</mat-list-option>
+            }
+        </mat-selection-list>
+        @if (lists().available.length === 0 && query()) {
+            <p class="empty">{{ "PROJECT.SOURCE_EMPTY" | translate }}</p>
+        }
+    </section>
+
+    <div class="moves" [class.stacked]="handset()">
+        <button
+            mat-icon-button
+            type="button"
+            [disabled]="projectsStore.pending() || availableSelected() === 0"
+            [matTooltip]="'PROJECT.TARGETS_ADD' | translate"
+            [attr.aria-label]="'PROJECT.TARGETS_ADD' | translate"
+            (click)="addSelected()"
+        >
+            <mat-icon>{{ handset() ? "keyboard_arrow_down" : "chevron_right" }}</mat-icon>
+        </button>
+        <button
+            mat-icon-button
+            type="button"
+            [disabled]="projectsStore.pending() || lists().available.length === 0"
+            [matTooltip]="'PROJECT.TARGETS_ADD_ALL' | translate"
+            [attr.aria-label]="'PROJECT.TARGETS_ADD_ALL' | translate"
+            (click)="addAll()"
+        >
+            <mat-icon>{{ handset() ? "keyboard_double_arrow_down" : "keyboard_double_arrow_right" }}</mat-icon>
+        </button>
+        <button
+            mat-icon-button
+            type="button"
+            [disabled]="projectsStore.pending() || projectSelected() === 0"
+            [matTooltip]="'PROJECT.TARGETS_REMOVE' | translate"
+            [attr.aria-label]="'PROJECT.TARGETS_REMOVE' | translate"
+            (click)="removeSelected()"
+        >
+            <mat-icon>{{ handset() ? "keyboard_arrow_up" : "chevron_left" }}</mat-icon>
+        </button>
+        <button
+            mat-icon-button
+            type="button"
+            [disabled]="projectsStore.pending() || lists().chosen.length === 0"
+            [matTooltip]="'PROJECT.TARGETS_REMOVE_ALL' | translate"
+            [attr.aria-label]="'PROJECT.TARGETS_REMOVE_ALL' | translate"
+            (click)="removeAll()"
+        >
+            <mat-icon>{{ handset() ? "keyboard_double_arrow_up" : "keyboard_double_arrow_left" }}</mat-icon>
+        </button>
+    </div>
+
+    <section class="board">
+        <header class="board-head">
+            <h3>{{ "PROJECT.TARGETS_PROJECT" | translate }}</h3>
+            <span class="count">{{ lists().chosen.length }}</span>
+        </header>
+        <mat-selection-list #projectList multiple (selectionChange)="onProjectSelection(projectList)">
+            @for (locale of lists().chosen; track locale.code) {
+                <mat-list-option [value]="locale.code" togglePosition="before">{{ locale.label }}</mat-list-option>
+            }
+        </mat-selection-list>
+        @if (lists().chosen.length === 0) {
+            <p class="empty">
+                {{ query() ? ("PROJECT.SOURCE_EMPTY" | translate) : ("PROJECT.TARGETS_EMPTY" | translate) }}
+            </p>
+        }
+    </section>
+</div>

@@ -1,0 +1,17 @@
+---
+description: Conteneurs Podman et images publiées par la CI
+globs: "{**/Dockerfile,**/Containerfile,compose*.yaml,.github/workflows/**/*.yml}"
+alwaysApply: false
+---
+
+# Conteneurs et CI
+
+Le développement local passe par Podman : `podman compose up --build`. `compose.yaml` est le bureau de dev (PostgreSQL, `dotnet watch`, `bun run start`). `compose.prod.yaml` est le serveur. Le front s'installe avec `bun install --frozen-lockfile`.
+
+- `compose.yaml` utilise le réseau de la machine (`network_mode: host`) pour que Windows ouvre `localhost`. `compose.prod.yaml` garde le réseau des conteneurs.
+- `Containerfile` : image de dev, contexte du module (`Back/` ou `Front/`).
+- `Dockerfile` : image de prod, contexte racine du dépôt, comme la CI.
+- L'API de prod n'est pas publiée. Nginx (`Front/nginx.conf`) sert l'interface et proxifie `/api/` vers `api:80`.
+- La CI pousse `${REGISTRY}/babelary/api` et `${REGISTRY}/babelary/web`, tags version, `staging` (branche `develop`) et `latest` (branche `main`).
+- Secrets de registry : `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`. Variable : `REGISTRY`.
+- Le mot de passe Postgres de prod vient de l'environnement du serveur, pas du dépôt.

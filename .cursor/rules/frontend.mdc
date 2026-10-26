@@ -1,0 +1,36 @@
+---
+description: Conventions Angular de l'interface Babelary
+globs: Front/**/*.{ts,html,scss}
+alwaysApply: false
+---
+
+# Frontend
+
+Angular standalone, Angular Material, signals, Bun. Le thème est celui de Material, sombre, dans `styles.scss` (`mat.theme`, `theme-type: dark`). Les couleurs passent par les variables `--mat-sys-*`. Chaque domaine vit dans `features/<domaine>/` :
+
+```text
+pages/       écrans
+components/  morceaux d'écran
+stores/      état et actions
+services/    HTTP, étend BaseService
+models/
+```
+
+- Le composant injecte le store. Le store injecte le service. Le composant n'appelle pas le service.
+- Stores et services : `@Injectable()` sans `providedIn`, enregistrés dans `app.config.ts`. Le store peut omettre le décorateur, comme dans le BackOffice.
+- Guillemets doubles, indent 4, `standalone: true`, `inject()`.
+- État du store : `signal`, `computed`, `resource`.
+- HTTP uniquement dans le service, via `BaseService` : `baseUrlService = "Projects"`, action en string, filtres dans `HttpParams`.
+- DTO → modèle par `fromDto`. Le template ne voit pas le DTO.
+- Intercepteurs : cookie `withCredentials`, traduction de `error.Message` quand il commence par `ERR_`. Le JSON `fr-FR.json` se charge via `HttpBackend`.
+- Textes d'interface dans `public/i18n/fr-FR.json`, clés `GLOBAL` et `ERROR`. Le pipe `translate` est obligatoire.
+- Formulaires réactifs, payload construit explicitement avant l'envoi.
+- Routes lazy. Les valeurs de traduction s'affichent par interpolation, jamais par `innerHTML`.
+
+```typescript
+protected override baseUrlService = "Projects";
+
+public get(project: string): Observable<Project | null> {
+    return this.httpGet(Project, "get", new HttpParams().set("project", project));
+}
+```

@@ -1,0 +1,144 @@
+<nav class="rail">
+    <a class="back" [routerLink]="['/projet', slug()]" [matTooltip]="'PROJECT.EDITOR_BACK' | translate" [attr.aria-label]="'PROJECT.EDITOR_BACK' | translate">
+        <mat-icon>arrow_back</mat-icon>
+    </a>
+    <app-choice-menu
+        [label]="'PROJECT.SWITCH_LOCALE' | translate"
+        [value]="language()"
+        [current]="locale()"
+        [searchLabel]="'PROJECT.SWITCH_LOCALE_SEARCH' | translate"
+        [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
+        [options]="localeOptions()"
+        (picked)="openLocale($event)"
+    />
+    <app-choice-menu
+        [label]="'PROJECT.SWITCH_FILE' | translate"
+        [value]="fileLabel()"
+        [current]="file()"
+        [searchLabel]="'PROJECT.SWITCH_FILE_SEARCH' | translate"
+        [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
+        [options]="fileOptions()"
+        (picked)="pickFile($event)"
+    />
+    @if (localeProgress(); as row) {
+        <app-translation-meter
+            [translated]="row.translated"
+            [total]="row.total"
+            [pending]="row.pending"
+            [pendingOpen]="row.pendingOpen"
+        />
+    }
+</nav>
+
+@if (projectsStore.error()) {
+    <p class="form-error">{{ projectsStore.error() }}</p>
+}
+
+<div class="toolbar">
+    <mat-form-field class="search" subscriptSizing="dynamic">
+        <mat-label>{{ "PROJECT.EDITOR_SEARCH" | translate }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput type="search" [value]="query()" (input)="onQuery($any($event.target).value)" />
+    </mat-form-field>
+    <div class="bulk">
+        <mat-checkbox [checked]="allSelected()" [disabled]="busy()" [indeterminate]="someSelected()" (click)="toggleAll($event)">
+            @if (allSelected()) {
+                {{ "PROJECT.SELECT_NONE" | translate }}
+            } @else {
+                {{ "PROJECT.SELECT_ALL" | translate }}
+            }
+        </mat-checkbox>
+        <span class="hint">
+            @if (chosen().length === 1) {
+                {{ "PROJECT.SELECTED_ONE" | translate: { count: chosen().length } }}
+            } @else {
+                {{ "PROJECT.SELECTED_MANY" | translate: { count: chosen().length } }}
+            }
+        </span>
+        <button mat-button type="button" [disabled]="busy() || chosen().length === 0" (click)="approve()">
+            <mat-icon>done_all</mat-icon>
+            {{ "PROJECT.APPROVE_SELECTED" | translate }}
+        </button>
+        <button mat-button type="button" [disabled]="busy() || chosen().length === 0" (click)="refuse()">
+            <mat-icon>close</mat-icon>
+            {{ "PROJECT.REFUSE_SELECTED" | translate }}
+        </button>
+    </div>
+</div>
+
+@if (busy()) {
+    <div class="busy" role="status">
+        <mat-progress-bar mode="indeterminate" />
+        <p>{{ "PROJECT.DECIDE_BUSY" | translate }}</p>
+    </div>
+}
+
+@if (filtered().length > 50) {
+    <app-list-pager
+        [length]="filtered().length"
+        [pageIndex]="paging().page"
+        [pageSize]="pageSize()"
+        (pageChange)="pageIndex.set($event)"
+        (sizeChange)="setPageSize($event)"
+    />
+}
+
+<section class="rows" [attr.aria-busy]="busy()">
+    @for (proposal of pageRows(); track proposal.id; let index = $index) {
+        <article class="row">
+            <div class="head">
+                <mat-checkbox
+                    [checked]="selected().has(proposal.id)"
+                    [disabled]="busy()"
+                    (click)="toggleRow($event, paging().start + index, proposal.id)"
+                >
+                    <span class="path">{{ heading(proposal) }}</span>
+                </mat-checkbox>
+                <app-translation-status status="pending" />
+                <span class="meta">{{ proposal.authorName }}</span>
+            </div>
+            <div class="compare">
+                <div class="panel source">
+                    <span class="caption">{{ "PROJECT.COMPARE_SOURCE" | translate }}</span>
+                    <p class="text">
+                        @for (part of parts(proposal.sourceValue); track $index) {
+                            @if (part.token) {
+                                <span class="token">{{ part.text }}</span>
+                            } @else {
+                                <span>{{ part.text }}</span>
+                            }
+                        }
+                    </p>
+                </div>
+                <div class="decision">
+                    @if (proposal.currentText) {
+                        <div class="panel current">
+                            <span class="caption">{{ "PROJECT.COMPARE_CURRENT" | translate }}</span>
+                            <p class="text">{{ proposal.currentText }}</p>
+                        </div>
+                    }
+                    <div class="panel proposal">
+                        <span class="caption">{{ "PROJECT.COMPARE_PROPOSAL" | translate }}</span>
+                        <p class="text">{{ proposal.text }}</p>
+                    </div>
+                </div>
+            </div>
+            @if (rowError()[proposal.id]) {
+                <p class="form-error">{{ rowError()[proposal.id] }}</p>
+            }
+        </article>
+    } @empty {
+        @if (!projectsStore.error()) {
+            <p class="empty">{{ "PROJECT.PROPOSALS_EMPTY" | translate }}</p>
+        }
+    }
+</section>
+@if (filtered().length > 50) {
+    <app-list-pager
+        [length]="filtered().length"
+        [pageIndex]="paging().page"
+        [pageSize]="pageSize()"
+        (pageChange)="pageIndex.set($event)"
+        (sizeChange)="setPageSize($event)"
+    />
+}

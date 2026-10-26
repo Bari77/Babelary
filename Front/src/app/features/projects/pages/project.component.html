@@ -1,0 +1,128 @@
+<main class="page project-page">
+    <nav mat-tab-nav-bar [tabPanel]="tabPanel" [fitInkBarToContent]="true" mat-stretch-tabs="false">
+        @if (slug(); as project) {
+            <a
+                mat-tab-link
+                [class.icon-only]="handset()"
+                [routerLink]="['/projet', project]"
+                [active]="translationActive()"
+                [attr.aria-label]="'PROJECT.TAB_TRANSLATION' | translate"
+                [matTooltip]="'PROJECT.TAB_TRANSLATION' | translate"
+                [matTooltipDisabled]="!handset()"
+            >
+                <mat-icon>translate</mat-icon>
+                @if (!handset()) {
+                    <span>{{ "PROJECT.TAB_TRANSLATION" | translate }}</span>
+                }
+            </a>
+            @if (owner()) {
+                <a
+                    mat-tab-link
+                    [class.icon-only]="handset()"
+                    [routerLink]="['/projet', project, 'propositions']"
+                    [active]="proposalsActive()"
+                    [attr.aria-label]="(proposalCount() > 0 ? 'PROJECT.TAB_PROPOSALS_COUNT' : 'PROJECT.TAB_PROPOSALS') | translate: { count: proposalCount() }"
+                    [matTooltip]="'PROJECT.TAB_PROPOSALS' | translate"
+                    [matTooltipDisabled]="!handset()"
+                >
+                    <mat-icon>rate_review</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_PROPOSALS" | translate }}</span>
+                    }
+                    @if (proposalCount() > 0) {
+                        <span class="tab-count">{{ proposalCount() }}</span>
+                    }
+                </a>
+                <a
+                    mat-tab-link
+                    [class.icon-only]="handset()"
+                    [routerLink]="['/projet', project, 'source']"
+                    routerLinkActive
+                    #source="routerLinkActive"
+                    [active]="source.isActive"
+                    [attr.aria-label]="'PROJECT.TAB_SOURCE' | translate"
+                    [matTooltip]="'PROJECT.TAB_SOURCE' | translate"
+                    [matTooltipDisabled]="!handset()"
+                >
+                    <mat-icon>description</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_SOURCE" | translate }}</span>
+                    }
+                </a>
+                <a
+                    mat-tab-link
+                    [class.icon-only]="handset()"
+                    [routerLink]="['/projet', project, 'membres']"
+                    routerLinkActive
+                    #members="routerLinkActive"
+                    [active]="members.isActive"
+                    [attr.aria-label]="'PROJECT.TAB_MEMBERS' | translate"
+                    [matTooltip]="'PROJECT.TAB_MEMBERS' | translate"
+                    [matTooltipDisabled]="!handset()"
+                >
+                    <mat-icon>group</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_MEMBERS" | translate }}</span>
+                    }
+                </a>
+                <a
+                    mat-tab-link
+                    [class.icon-only]="handset()"
+                    [routerLink]="['/projet', project, 'parametres']"
+                    routerLinkActive
+                    #settings="routerLinkActive"
+                    [active]="settings.isActive"
+                    [attr.aria-label]="'PROJECT.TAB_SETTINGS' | translate"
+                    [matTooltip]="'PROJECT.TAB_SETTINGS' | translate"
+                    [matTooltipDisabled]="!handset()"
+                >
+                    <mat-icon>settings</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_SETTINGS" | translate }}</span>
+                    }
+                </a>
+            }
+        } @else {
+            <a
+                mat-tab-link
+                disabled
+                [class.icon-only]="handset()"
+                [attr.aria-label]="'PROJECT.TAB_TRANSLATION' | translate"
+            >
+                <mat-icon>translate</mat-icon>
+                @if (!handset()) {
+                    <span>{{ "PROJECT.TAB_TRANSLATION" | translate }}</span>
+                }
+            </a>
+            @if (owner()) {
+                <a mat-tab-link disabled [class.icon-only]="handset()" [attr.aria-label]="'PROJECT.TAB_PROPOSALS' | translate">
+                    <mat-icon>rate_review</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_PROPOSALS" | translate }}</span>
+                    }
+                </a>
+                <a mat-tab-link disabled [class.icon-only]="handset()" [attr.aria-label]="'PROJECT.TAB_SOURCE' | translate">
+                    <mat-icon>description</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_SOURCE" | translate }}</span>
+                    }
+                </a>
+                <a mat-tab-link disabled [class.icon-only]="handset()" [attr.aria-label]="'PROJECT.TAB_MEMBERS' | translate">
+                    <mat-icon>group</mat-icon>
+                    @if (!handset()) {
+                        <span>{{ "PROJECT.TAB_MEMBERS" | translate }}</span>
+                    }
+                </a>
+            }
+            <a mat-tab-link [active]="true" [class.icon-only]="handset()" [attr.aria-label]="'PROJECT.TAB_SETTINGS' | translate">
+                <mat-icon>settings</mat-icon>
+                @if (!handset()) {
+                    <span>{{ "PROJECT.TAB_SETTINGS" | translate }}</span>
+                }
+            </a>
+        }
+    </nav>
+    <mat-tab-nav-panel #tabPanel>
+        <router-outlet />
+    </mat-tab-nav-panel>
+</main>
