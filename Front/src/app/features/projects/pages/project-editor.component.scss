@@ -132,6 +132,12 @@ header {
     font: var(--mat-sys-body-medium);
 }
 
+.file-name {
+    margin-right: 8px;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+}
+
 .source-label {
     margin-right: 6px;
     font: var(--mat-sys-label-medium);

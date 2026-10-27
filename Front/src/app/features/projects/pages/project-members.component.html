@@ -27,7 +27,7 @@
                             [checked]="inviteLocales().includes(locale)"
                             (change)="toggleInvite(locale, $event.checked)"
                         >
-                            {{ localesStore.label(locale) }}
+                            <app-locale-flag [code]="locale" />{{ localesStore.label(locale) }}
                         </mat-checkbox>
                     } @empty {
                         <p class="hint">{{ "PROJECT.TARGETS_EMPTY" | translate }}</p>
@@ -56,6 +56,9 @@
         </mat-card-content>
     </mat-card>
 
+    @if (!loaded()) {
+        <app-skeleton [count]="4" />
+    } @else {
     <mat-card>
         <mat-card-header>
             <mat-card-title>{{ "PROJECT.INVITES" | translate }}</mat-card-title>
@@ -97,7 +100,7 @@
                     <div class="edit">
                         @for (locale of project()?.targets ?? []; track locale) {
                             <mat-checkbox [checked]="editLocales().includes(locale)" (change)="toggleEdit(locale, $event.checked)">
-                                {{ localesStore.label(locale) }}
+                                <app-locale-flag [code]="locale" />{{ localesStore.label(locale) }}
                             </mat-checkbox>
                         }
                         <button mat-flat-button type="button" [disabled]="editLocales().length === 0" (click)="saveEdit()">
@@ -110,4 +113,5 @@
             }
         </mat-card-content>
     </mat-card>
+    }
 }

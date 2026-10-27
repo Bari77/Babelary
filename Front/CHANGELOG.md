@@ -1,3 +1,11 @@
+## [v0.3.0] - 2026-10-27
+
+Le chargement des listes affiche des squelettes. Les langues ont un drapeau, l'import des traductions est sur l'onglet Traductions, et un fichier source peut être supprimé.
+
+## [v0.2.0] - 2026-10-27
+
+L'éditeur peut afficher toutes les chaînes d'une langue. Le menu indique la version.
+
 ## [v0.1.1] - 2026-10-27
 
 Nginx transmet à l'API le protocole vu par Traefik.

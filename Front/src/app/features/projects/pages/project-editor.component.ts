@@ -7,18 +7,20 @@ import { MatIcon } from "@angular/material/icon";
 import { MatInput } from "@angular/material/input";
 import { MatTooltip } from "@angular/material/tooltip";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
+import { SkeletonComponent } from "@core/skeleton.component";
 import { localeLabel } from "@features/locales/models/locale.model";
 import { ChoiceMenuComponent, ChoiceOption } from "@features/projects/components/choice-menu.component";
 import { ListPagerComponent, pageWindow } from "@features/projects/components/list-pager.component";
 import { TranslationMeterComponent } from "@features/projects/components/translation-meter.component";
 import { TranslationStatusComponent } from "@features/projects/components/translation-status.component";
+import { FileProgress } from "@features/projects/models/membership.model";
 import { TextPart, TranslationEntry, textParts } from "@features/projects/models/translation.model";
 import { ProjectsStore } from "@features/projects/stores/projects.store";
 import { SessionStore } from "@features/session/stores/session.store";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 /**
- * Editor for one file and one target locale.
+ * Editor for one target locale. A file can be selected, or every file at once.
  * The owner writes the saved value. A member submits a proposal.
  */
 @Component({
@@ -37,6 +39,7 @@ import { TranslateModule } from "@ngx-translate/core";
         MatSuffix,
         MatInput,
         ChoiceMenuComponent,
+        SkeletonComponent,
         ListPagerComponent,
         TranslationMeterComponent,
         TranslationStatusComponent,
@@ -59,6 +62,7 @@ export class ProjectEditorComponent {
     public readonly ready = signal(false);
     public readonly exporting = signal(false);
     public readonly language = computed(() => localeLabel(this.locale()) || this.locale());
+    public readonly fileLabel = computed(() => this.file() || this.translate.instant("PROJECT.FILE_ALL"));
     public readonly targets = computed(() => this.projectsStore.current()?.targets ?? []);
     public readonly files = computed(() => this.projectsStore.fileProgress());
     public readonly localeOptions = computed((): ChoiceOption[] =>
@@ -72,15 +76,40 @@ export class ProjectEditorComponent {
             };
         }),
     );
-    public readonly fileOptions = computed((): ChoiceOption[] =>
-        this.files().map((item) => ({
-            id: item.name,
-            name: item.name,
-            detail: `${item.covered()}/${item.total}`,
-            pending: 0,
-        })),
-    );
-    public readonly currentFile = computed(() => this.files().find((item) => item.name === this.file()));
+    public readonly fileOptions = computed((): ChoiceOption[] => {
+        const files = this.files();
+        const covered = files.reduce((sum, item) => sum + item.covered(), 0);
+        const total = files.reduce((sum, item) => sum + item.total, 0);
+        return [
+            {
+                id: "",
+                name: this.translate.instant("PROJECT.FILE_ALL"),
+                detail: total > 0 ? `${covered}/${total}` : "",
+                pending: 0,
+            },
+            ...files.map((item) => ({
+                id: item.name,
+                name: item.name,
+                detail: `${item.covered()}/${item.total}`,
+                pending: 0,
+            })),
+        ];
+    });
+    public readonly meter = computed(() => {
+        const current = this.files().find((item) => item.name === this.file());
+        if (current) {
+            return current;
+        }
+
+        const files = this.files();
+        return new FileProgress(
+            "",
+            files.reduce((sum, item) => sum + item.translated, 0),
+            files.reduce((sum, item) => sum + item.total, 0),
+            files.reduce((sum, item) => sum + item.pending, 0),
+            files.reduce((sum, item) => sum + item.pendingOpen, 0),
+        );
+    });
     public readonly visible = computed(() => {
         const query = this.query().trim().toLocaleLowerCase("fr");
         return this.projectsStore.entries().filter((entry) => {
@@ -97,7 +126,9 @@ export class ProjectEditorComponent {
                 return true;
             }
             const proposal = entry.proposalText ?? "";
-            return [entry.path, entry.sourceValue, entry.text, proposal].some((value) => value.toLocaleLowerCase("fr").includes(query));
+            return [entry.fileName, entry.path, entry.sourceValue, entry.text, proposal].some((value) =>
+                value.toLocaleLowerCase("fr").includes(query),
+            );
         });
     });
     public readonly paging = computed(() => pageWindow(this.visible().length, this.pageIndex(), this.pageSize()));
@@ -107,6 +138,7 @@ export class ProjectEditorComponent {
     });
 
     private readonly sessionStore = inject(SessionStore);
+    private readonly translate = inject(TranslateService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly controls = new Map<string, FormControl<string>>();
@@ -142,7 +174,7 @@ export class ProjectEditorComponent {
             return;
         }
 
-        await this.router.navigate(["/projet", this.slug(), "editeur", code, this.file()]);
+        await this.router.navigate(this.editorCommands(code, this.file()));
     }
 
     public async download(): Promise<void> {
@@ -169,11 +201,20 @@ export class ProjectEditorComponent {
     }
 
     public async openFile(name: string): Promise<void> {
-        if (!name || name === this.file()) {
+        if (name === this.file()) {
             return;
         }
 
-        await this.router.navigate(["/projet", this.slug(), "editeur", this.locale(), name]);
+        await this.router.navigate(this.editorCommands(this.locale(), name));
+    }
+
+    private editorCommands(locale: string, file: string): string[] {
+        const commands = ["/projet", this.slug(), "editeur", locale];
+        if (file) {
+            commands.push(file);
+        }
+
+        return commands;
     }
 
     public parts(value: string): TextPart[] {

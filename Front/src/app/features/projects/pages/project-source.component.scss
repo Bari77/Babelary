@@ -1,77 +1,101 @@
 :host {
-    display: grid;
-    gap: 16px;
+    display: block;
 }
 
 .source {
     display: grid;
-    gap: 12px;
+    gap: 16px;
 }
 
-.lead,
-.hint,
-.empty {
+h2 {
     margin: 0;
+    font: var(--mat-sys-title-medium);
 }
 
 .hint,
+.empty,
+.summary,
 .count {
+    margin: 0;
     color: var(--mat-sys-on-surface-variant);
 }
 
-.actions {
+.summary {
     display: flex;
-    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font: var(--mat-sys-label-large);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+}
+
+.file-card {
+    display: flex;
     gap: 12px;
     align-items: center;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--mat-sys-surface-container);
 }
 
-.picker {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-}
-
-.names,
-.results,
-.files {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+.file-icon {
     display: grid;
-    gap: 8px;
+    flex-shrink: 0;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+    color: var(--mat-sys-primary);
 }
 
-.files li,
-.results li {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
+.file-icon mat-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
 }
 
-.results li.translation-result {
+.file-body {
     display: grid;
-    justify-content: start;
-    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
 }
 
-.warning {
-    margin: 0;
-    color: var(--status-warn);
+.delete {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding: 4px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--mat-sys-on-surface-variant);
+    cursor: pointer;
 }
 
-.issues {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 4px;
+.delete:disabled {
+    opacity: 0.38;
+    cursor: default;
+}
+
+.delete mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
 }
 
 .file-name {
+    overflow: hidden;
     font: var(--mat-sys-title-small);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.count {
+    font: var(--mat-sys-body-small);
 }

@@ -12,6 +12,8 @@ import { MatSelect, MatSelectTrigger } from "@angular/material/select";
 import { MatSnackBar } from "@angular/material/snack-bar";
 import { ActivatedRoute, Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
+import { SkeletonComponent } from "@core/skeleton.component";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { LocalesStore } from "@features/locales/stores/locales.store";
 import { DeleteProjectDialog } from "@features/projects/components/delete-project.dialog";
 import { ResetProjectDialog } from "@features/projects/components/reset-project.dialog";
@@ -44,6 +46,8 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
         MatButton,
         MatProgressSpinner,
         TargetLanguagesComponent,
+        LocaleFlagComponent,
+        SkeletonComponent,
     ],
     templateUrl: "./project-settings.component.html",
     styleUrl: "./project-settings.component.scss",

@@ -9,7 +9,9 @@ COPY Front/package.json Front/bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY Front/ ./
-RUN bun run build
+ARG VERSION
+RUN if [ -n "$VERSION" ]; then printf 'export const siteVersion = "%s";\n' "$VERSION" > src/app/version.ts; fi \
+    && bun run build
 
 FROM nginx:1.27-alpine
 WORKDIR /usr/share/nginx/html

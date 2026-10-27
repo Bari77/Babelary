@@ -1,5 +1,18 @@
 const languageNames = new Intl.DisplayNames(["fr-FR"], { type: "language" });
 const regionNames = new Intl.DisplayNames(["fr-FR"], { type: "region" });
+const regionalBase = 0x1f1e6;
+
+/**
+ * Flag emoji for the region of an `xx-XX` locale. Empty when the region is not a country code.
+ */
+export function localeFlag(code: string): string {
+    const region = /^[a-z]{2}-([A-Z]{2})$/.exec(code)?.[1];
+    if (!region) {
+        return "";
+    }
+
+    return String.fromCodePoint(regionalBase + region.charCodeAt(0) - 65, regionalBase + region.charCodeAt(1) - 65);
+}
 
 /**
  * French name of a locale, such as « Français (France) ». Empty when the name cannot be formed.

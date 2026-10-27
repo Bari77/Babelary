@@ -53,6 +53,14 @@ export const routes: Routes = [
                     },
                     {
                         path: "editeur/:locale/:file",
+                        pathMatch: "full",
+                        canDeactivate: [leaveEditorGuard],
+                        loadComponent: () =>
+                            import("@features/projects/pages/project-editor.component").then((m) => m.ProjectEditorComponent),
+                    },
+                    {
+                        path: "editeur/:locale",
+                        pathMatch: "full",
                         canDeactivate: [leaveEditorGuard],
                         loadComponent: () =>
                             import("@features/projects/pages/project-editor.component").then((m) => m.ProjectEditorComponent),

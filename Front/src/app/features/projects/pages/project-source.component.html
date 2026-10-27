@@ -1,78 +1,51 @@
 @if (!owner()) {
     <p class="empty">{{ "PROJECT.SOURCE_FORBIDDEN" | translate }}</p>
 } @else {
-    <mat-card>
-        <mat-card-header>
-            <mat-card-title>{{ "PROJECT.FILES" | translate }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="source">
+    <section class="source">
+        <header>
+            <h2>{{ "PROJECT.FILES" | translate }}</h2>
             <p class="hint">{{ "PROJECT.FILES_HINT" | translate }}</p>
+        </header>
 
-            <div class="actions">
-                <input
-                    #picker
-                    class="picker"
-                    type="file"
-                    accept=".json,application/json"
-                    multiple
-                    [attr.aria-label]="'PROJECT.FILES_PICK' | translate"
-                    (change)="onFiles($event)"
-                />
-                <button mat-stroked-button type="button" (click)="picker.click()">
-                    {{ "PROJECT.FILES_PICK" | translate }}
-                </button>
-                <button
-                    mat-flat-button
-                    type="button"
-                    [disabled]="projectsStore.pending() || selected().length === 0"
-                    (click)="import()"
-                >
-                    @if (busy() === "sources") {
-                        <mat-spinner diameter="18" />
-                    } @else {
-                        {{ "PROJECT.FILES_IMPORT" | translate }}
-                    }
-                </button>
-            </div>
+        <app-import-panel
+            [items]="items()"
+            [busy]="busy()"
+            [canImport]="selected().length > 0"
+            [error]="failed() ? projectsStore.error() : null"
+            (picked)="onFiles($event)"
+            (removed)="remove($event)"
+            (confirmed)="import()"
+        />
 
-            @if (selected().length > 0) {
-                <ul class="names">
-                    @for (file of selected(); track file.name) {
-                        <li>{{ file.name }}</li>
-                    }
-                </ul>
-            }
+        @if (!failed() && projectsStore.error()) {
+            <p class="form-error">{{ projectsStore.error() }}</p>
+        }
 
-            @if (failureOn() === "sources" && projectsStore.error()) {
-                <p class="form-error">{{ projectsStore.error() }}</p>
-            }
-
-            @if (results().length > 0) {
-                <ul class="results">
-                    @for (row of results(); track row.name) {
-                        <li>
-                            <span class="file-name">{{ row.name }}</span>
-                            @if (row.error) {
-                                <span class="form-error">{{ ("ERROR." + row.error) | translate }}</span>
-                            } @else {
-                                <span>
-                                    {{
-                                        "PROJECT.FILES_RESULT"
-                                            | translate: { created: row.created, updated: row.updated, deleted: row.deleted }
-                                    }}
-                                </span>
-                            }
-                        </li>
-                    }
-                </ul>
-            }
-
-            @if (projectsStore.sourceFiles().length === 0) {
-                <p class="empty">{{ "PROJECT.FILES_EMPTY" | translate }}</p>
-            } @else {
-                <ul class="files">
-                    @for (file of projectsStore.sourceFiles(); track file.name) {
-                        <li>
+        @if (!loaded()) {
+            <app-skeleton shape="cards" [count]="8" />
+        } @else if (projectsStore.sourceFiles().length === 0) {
+            <p class="empty">{{ "PROJECT.FILES_EMPTY" | translate }}</p>
+        } @else {
+            <p class="summary">
+                @if (projectsStore.sourceFiles().length === 1) {
+                    {{ "PROJECT.FILES_ONE" | translate: { count: projectsStore.sourceFiles().length } }}
+                } @else {
+                    {{ "PROJECT.FILES_MANY" | translate: { count: projectsStore.sourceFiles().length } }}
+                }
+                <span aria-hidden="true">·</span>
+                @if (keyTotal() === 1) {
+                    {{ "PROJECT.FILES_KEY_ONE" | translate: { count: keyTotal() } }}
+                } @else {
+                    {{ "PROJECT.FILES_KEY_MANY" | translate: { count: keyTotal() } }}
+                }
+            </p>
+            <div class="grid">
+                @for (file of projectsStore.sourceFiles(); track file.name) {
+                    <article class="file-card">
+                        <span class="file-icon" aria-hidden="true">
+                            <mat-icon>data_object</mat-icon>
+                        </span>
+                        <span class="file-body">
                             <span class="file-name">{{ file.name }}</span>
                             <span class="count">
                                 @if (file.keyCount === 1) {
@@ -81,113 +54,24 @@
                                     {{ "PROJECT.FILES_KEY_MANY" | translate: { count: file.keyCount } }}
                                 }
                             </span>
-                        </li>
-                    }
-                </ul>
-            }
-        </mat-card-content>
-    </mat-card>
-
-    <mat-card>
-        <mat-card-header>
-            <mat-card-title>{{ "PROJECT.TRANSLATIONS" | translate }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="source">
-            <p class="hint">{{ "PROJECT.TRANSLATIONS_HINT" | translate }}</p>
-            @if (localeOptions().length === 0) {
-                <p class="empty">{{ "PROJECT.TRANSLATIONS_EMPTY_LOCALES" | translate }}</p>
-            } @else {
-                <div class="actions">
-                    <app-choice-menu
-                        [label]="'PROJECT.SWITCH_LOCALE' | translate"
-                        [value]="translationLocale() ? localesStore.label(translationLocale()) : ('PROJECT.TRANSLATIONS_PICK_LOCALE' | translate)"
-                        [current]="translationLocale()"
-                        [searchLabel]="'PROJECT.SWITCH_LOCALE_SEARCH' | translate"
-                        [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
-                        [options]="localeOptions()"
-                        (picked)="translationLocale.set($event)"
-                    />
-                    <input
-                        #translationPicker
-                        class="picker"
-                        type="file"
-                        accept=".json,application/json"
-                        multiple
-                        [attr.aria-label]="'PROJECT.FILES_PICK' | translate"
-                        (change)="onTranslationFiles($event)"
-                    />
-                    <button mat-stroked-button type="button" (click)="translationPicker.click()">
-                        {{ "PROJECT.FILES_PICK" | translate }}
-                    </button>
-                    <button
-                        mat-flat-button
-                        type="button"
-                        [disabled]="projectsStore.pending() || translationLocale() === '' || translationFiles().length === 0"
-                        (click)="importTranslations()"
-                    >
-                        @if (busy() === "translations") {
-                            <mat-spinner diameter="18" />
-                        } @else {
-                            {{ "PROJECT.FILES_IMPORT" | translate }}
-                        }
-                    </button>
-                </div>
-
-                @if (translationFiles().length > 0) {
-                    <ul class="names">
-                        @for (file of translationFiles(); track file.name) {
-                            <li>{{ file.name }}</li>
-                        }
-                    </ul>
+                        </span>
+                        <button
+                            class="delete"
+                            type="button"
+                            [disabled]="busy() || deleting() !== null"
+                            [matTooltip]="'PROJECT.DELETE' | translate"
+                            [attr.aria-label]="'PROJECT.DELETE_FILE' | translate: { name: file.name }"
+                            (click)="confirmDelete(file.name)"
+                        >
+                            @if (deleting() === file.name) {
+                                <mat-spinner diameter="18" />
+                            } @else {
+                                <mat-icon>delete</mat-icon>
+                            }
+                        </button>
+                    </article>
                 }
-
-                @if (failureOn() === "translations" && projectsStore.error()) {
-                    <p class="form-error">{{ projectsStore.error() }}</p>
-                }
-
-                @if (translationResults().length > 0) {
-                    <ul class="results">
-                        @for (row of translationResults(); track row.name) {
-                            <li class="translation-result">
-                                <span class="file-name">{{ row.name }}</span>
-                                @if (row.error) {
-                                    <span class="form-error">{{ ("ERROR." + row.error) | translate }}</span>
-                                } @else {
-                                    <span>
-                                        {{
-                                            "PROJECT.TRANSLATIONS_RESULT"
-                                                | translate
-                                                    : {
-                                                          updated: row.updated,
-                                                          unchanged: row.unchanged,
-                                                          skipped: row.skipped,
-                                                          ignored: row.ignored,
-                                                      }
-                                        }}
-                                    </span>
-                                    @if (row.missing === 1) {
-                                        <p class="warning">{{ "PROJECT.TRANSLATIONS_MISSING_ONE" | translate }}</p>
-                                    } @else if (row.missing > 1) {
-                                        <p class="warning">
-                                            {{ "PROJECT.TRANSLATIONS_MISSING_MANY" | translate: { count: row.missing } }}
-                                        </p>
-                                    }
-                                    @if (row.issues.length > 0) {
-                                        <ul class="issues">
-                                            @for (issue of row.issues; track issue.path) {
-                                                <li class="form-error">
-                                                    {{ issue.path }}
-                                                    {{ ("ERROR." + issue.error) | translate: { token: issue.detail } }}
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                }
-                            </li>
-                        }
-                    </ul>
-                }
-            }
-        </mat-card-content>
-    </mat-card>
+            </div>
+        }
+    </section>
 }

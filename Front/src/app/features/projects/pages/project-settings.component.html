@@ -1,5 +1,7 @@
 @if (routeSlug() && !owner()) {
     <p class="empty">{{ "PROJECT.SOURCE_FORBIDDEN" | translate }}</p>
+} @else if (routeSlug() && projectsStore.current()?.slug !== routeSlug() && !projectsStore.error()) {
+    <app-skeleton shape="keys" [count]="4" />
 } @else {
 <div class="settings">
     <mat-card class="general">
@@ -34,7 +36,7 @@
                         panelClass="locale-panel"
                         (openedChange)="onLocalePanel($event, localeSearch)"
                     >
-                        <mat-select-trigger>{{ localesStore.label(form.controls.sourceLocale.value) }}</mat-select-trigger>
+                        <mat-select-trigger><app-locale-flag [code]="form.controls.sourceLocale.value" />{{ localesStore.label(form.controls.sourceLocale.value) }}</mat-select-trigger>
                         <mat-option class="locale-search-option" disabled>
                             <input
                                 #localeSearch
@@ -50,7 +52,7 @@
                             />
                         </mat-option>
                         @for (locale of filteredLocales(); track locale.code) {
-                            <mat-option [value]="locale.code">{{ locale.label }}</mat-option>
+                            <mat-option [value]="locale.code"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-option>
                         }
                         @if (filteredLocales().length === 0) {
                             <mat-option disabled>{{ "PROJECT.SOURCE_EMPTY" | translate }}</mat-option>

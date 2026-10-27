@@ -1,0 +1,242 @@
+:host {
+    display: grid;
+    gap: 12px;
+}
+
+.extra:empty {
+    display: none;
+}
+
+.drop {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px dashed var(--mat-sys-outline);
+    border-radius: 16px;
+    background: var(--mat-sys-surface-container);
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.drop.over {
+    border-style: solid;
+    border-color: var(--mat-sys-primary);
+    background: color-mix(in srgb, var(--mat-sys-primary) 14%, var(--mat-sys-surface-container));
+}
+
+.drop.busy {
+    cursor: progress;
+    opacity: 0.72;
+}
+
+.drop.locked {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.picker {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.drop-icon {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+    color: var(--mat-sys-primary);
+}
+
+.drop-icon mat-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+.drop-copy {
+    display: grid;
+    flex: 1;
+    min-width: 12rem;
+    gap: 2px;
+}
+
+.drop-title {
+    font: var(--mat-sys-title-small);
+}
+
+.drop-hint,
+.size,
+.phase {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-small);
+}
+
+.queue {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border-left: 3px solid var(--mat-sys-outline);
+    background: var(--mat-sys-surface-container);
+    animation: import-in 180ms ease;
+}
+
+.item[data-phase="running"] {
+    border-left-color: var(--mat-sys-primary);
+    background: color-mix(in srgb, var(--mat-sys-primary) 8%, var(--mat-sys-surface-container));
+}
+
+.item[data-phase="done"] {
+    border-left-color: var(--status-ok);
+    background: color-mix(in srgb, var(--status-ok) 8%, var(--mat-sys-surface-container));
+}
+
+.item[data-phase="warning"] {
+    border-left-color: var(--status-warn);
+    background: color-mix(in srgb, var(--status-warn) 10%, var(--mat-sys-surface-container));
+}
+
+.item[data-phase="error"] {
+    border-left-color: var(--mat-sys-error);
+    background: color-mix(in srgb, var(--mat-sys-error) 10%, var(--mat-sys-surface-container));
+}
+
+.mark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+}
+
+.mark mat-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+}
+
+.item[data-phase="ready"] .mark {
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.item[data-phase="done"] .mark {
+    color: var(--status-ok);
+}
+
+.item[data-phase="warning"] .mark {
+    color: var(--status-warn);
+}
+
+.item[data-phase="error"] .mark {
+    color: var(--mat-sys-error);
+}
+
+.body {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.name {
+    font: var(--mat-sys-title-small);
+    overflow-wrap: anywhere;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.stat {
+    display: inline-flex;
+    gap: 4px;
+    align-items: baseline;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--mat-sys-surface-container-highest);
+    font: var(--mat-sys-label-medium);
+}
+
+.stat.zero {
+    opacity: 0.5;
+}
+
+.notes {
+    list-style: none;
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    font: var(--mat-sys-body-small);
+}
+
+.item[data-phase="warning"] .notes {
+    color: var(--status-warn);
+}
+
+.item[data-phase="error"] .notes {
+    color: var(--mat-sys-error);
+}
+
+.path {
+    margin-right: 6px;
+    font-weight: 600;
+}
+
+.confirm {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+@keyframes import-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .item {
+        animation: none;
+    }
+}

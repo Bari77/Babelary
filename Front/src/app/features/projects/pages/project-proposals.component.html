@@ -73,7 +73,7 @@
     </div>
 }
 
-@if (filtered().length > 50) {
+@if (ready() && filtered().length > 50) {
     <app-list-pager
         [length]="filtered().length"
         [pageIndex]="paging().page"
@@ -83,6 +83,9 @@
     />
 }
 
+@if (!ready()) {
+    <app-skeleton shape="keys" [count]="4" />
+} @else {
 <section class="rows" [attr.aria-busy]="busy()">
     @for (proposal of pageRows(); track proposal.id; let index = $index) {
         <article class="row">
@@ -141,4 +144,5 @@
         (pageChange)="pageIndex.set($event)"
         (sizeChange)="setPageSize($event)"
     />
+}
 }

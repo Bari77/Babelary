@@ -755,6 +755,47 @@ public class ProjectsImplTests : IDisposable
     }
 
     [Fact]
+    public async Task Deleting_a_source_file_removes_its_keys_and_translations()
+    {
+        await this.projects.CreateAsync(this.ownerId, "kert-front", "Kert", "en-US", CancellationToken.None);
+        await this.projects.AddTargetsAsync(this.ownerId, "kert-front", ["fr-FR"], CancellationToken.None);
+        await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [
+                new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Home", "LEAD": "Hello" } }""" },
+                new SourceFileUpload { Name = "pet.json", Content = """{ "PET": { "NAME": "Dog" } }""" },
+            ],
+            CancellationToken.None);
+        var home = await this.projects.ListEntriesAsync(this.ownerId, "kert-front", "fr-FR", "home.json", CancellationToken.None);
+        await this.projects.SaveTranslationAsync(this.ownerId, "kert-front", "fr-FR", home[0].KeyId, "Accueil", CancellationToken.None);
+        var invite = await this.projects.InviteAsync(this.ownerId, "kert-front", "trad@example.com", ["fr-FR"], CancellationToken.None);
+        await this.projects.AcceptInviteAsync(invite.Code, this.memberId, null, null, CancellationToken.None);
+        await this.projects.SaveTranslationAsync(this.memberId, "kert-front", "fr-FR", home[1].KeyId, "Bonjour", CancellationToken.None);
+
+        var forbidden = await Assert.ThrowsAsync<ForbiddenException>(() =>
+            this.projects.DeleteFileAsync(this.memberId, "kert-front", "home.json", CancellationToken.None));
+        Assert.Equal("ERR_PROJECT_FORBIDDEN", forbidden.Message);
+        Assert.Equal(2, await this.db.ProjectFiles.CountAsync());
+
+        var deleted = await this.projects.DeleteFileAsync(this.ownerId, "kert-front", "home.json", CancellationToken.None);
+        Assert.Equal(1, deleted.Total);
+        Assert.True(deleted.SourceLocaleLocked);
+        Assert.Equal("pet.json", Assert.Single(await this.db.ProjectFiles.Select(file => file.Name).ToListAsync()));
+        Assert.Equal("PET.NAME", Assert.Single(await this.db.ProjectKeys.Select(key => key.Path).ToListAsync()));
+        Assert.Empty(await this.db.ProjectProposals.ToListAsync());
+        Assert.DoesNotContain(await this.db.ProjectValues.Select(value => value.Text).ToListAsync(), text => text == "Accueil");
+
+        var cleared = await this.projects.DeleteFileAsync(this.ownerId, "kert-front", "pet.json", CancellationToken.None);
+        Assert.Equal(0, cleared.Total);
+        Assert.False(cleared.SourceLocaleLocked);
+
+        var missing = await Assert.ThrowsAsync<NotFoundException>(() =>
+            this.projects.DeleteFileAsync(this.ownerId, "kert-front", "home.json", CancellationToken.None));
+        Assert.Equal("ERR_FILE_MISSING", missing.Message);
+    }
+
+    [Fact]
     public async Task Empty_translation_stays_until_overwrite_is_asked()
     {
         await this.projects.CreateAsync(this.ownerId, "kert-front", "Kert", "en-US", CancellationToken.None);
@@ -823,6 +864,28 @@ public class ProjectsImplTests : IDisposable
         var empty = Assert.Single(french.Empty);
         Assert.Equal("home.json", empty.File);
         Assert.Equal("HOME.NOTE", empty.Path);
+    }
+
+    [Fact]
+    public async Task List_entries_without_a_file_returns_every_file()
+    {
+        await this.projects.CreateAsync(this.ownerId, "kert-front", "Kert", "en-US", CancellationToken.None);
+        await this.projects.AddTargetsAsync(this.ownerId, "kert-front", ["fr-FR"], CancellationToken.None);
+        await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [
+                new SourceFileUpload { Name = "account.json", Content = """{ "ACCOUNT": { "LOGIN": "User" } }""" },
+                new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Home" } }""" },
+            ],
+            CancellationToken.None);
+
+        var all = await this.projects.ListEntriesAsync(this.ownerId, "kert-front", "fr-FR", null, CancellationToken.None);
+        Assert.Equal(["account.json", "home.json"], all.Select(entry => entry.FileName).ToArray());
+        Assert.Equal(["ACCOUNT.LOGIN", "HOME.TITLE"], all.Select(entry => entry.Path).ToArray());
+
+        var home = await this.projects.ListEntriesAsync(this.ownerId, "kert-front", "fr-FR", "home.json", CancellationToken.None);
+        Assert.Equal("home.json", Assert.Single(home).FileName);
     }
 
     public void Dispose()

@@ -240,6 +240,31 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
     }
 
     /// <inheritdoc />
+    public async Task<ProjectDto> DeleteFileAsync(Guid accountId, string? project, string? file, CancellationToken token)
+    {
+        var stored = await RequireOwnedAsync(accountId, project, token);
+        var name = file?.Trim() ?? "";
+        if (name.Length == 0 || name.Length > 80 || name.Contains("..", StringComparison.Ordinal) || !FileNamePattern().IsMatch(name))
+        {
+            throw new BadRequestException("ERR_FILE_NAME_INVALID");
+        }
+
+        var fileId = await db.ProjectFiles
+            .Where(item => item.ProjectId == stored.Id && item.Name == name)
+            .Select(item => (Guid?)item.Id)
+            .FirstOrDefaultAsync(token);
+        if (fileId is null)
+        {
+            throw new NotFoundException("ERR_FILE_MISSING");
+        }
+
+        await DeleteFilesByIdAsync([fileId.Value], token);
+        stored.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(token);
+        return await CompleteAsync(stored, accountId, token);
+    }
+
+    /// <inheritdoc />
     public async Task<ImportSourcesDto> ImportSourcesAsync(
         Guid accountId,
         string? project,
@@ -292,15 +317,29 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
             return 0;
         }
 
+        await DeleteFilesByIdAsync(staleIds, token);
+        return staleIds.Count;
+    }
+
+    private async Task DeleteFilesByIdAsync(IReadOnlyList<Guid> fileIds, CancellationToken token)
+    {
+        if (fileIds.Count == 0)
+        {
+            return;
+        }
+
         var keyIds = await db.ProjectKeys
-            .Where(key => staleIds.Contains(key.FileId))
+            .Where(key => fileIds.Contains(key.FileId))
             .Select(key => key.Id)
             .ToListAsync(token);
-        await db.ProjectProposals.Where(proposal => keyIds.Contains(proposal.KeyId)).ExecuteDeleteAsync(token);
-        await db.ProjectValues.Where(value => keyIds.Contains(value.KeyId)).ExecuteDeleteAsync(token);
-        await db.ProjectKeys.Where(key => staleIds.Contains(key.FileId)).ExecuteDeleteAsync(token);
-        await db.ProjectFiles.Where(file => staleIds.Contains(file.Id)).ExecuteDeleteAsync(token);
-        return staleIds.Count;
+        if (keyIds.Count > 0)
+        {
+            await db.ProjectProposals.Where(proposal => keyIds.Contains(proposal.KeyId)).ExecuteDeleteAsync(token);
+            await db.ProjectValues.Where(value => keyIds.Contains(value.KeyId)).ExecuteDeleteAsync(token);
+            await db.ProjectKeys.Where(key => fileIds.Contains(key.FileId)).ExecuteDeleteAsync(token);
+        }
+
+        await db.ProjectFiles.Where(file => fileIds.Contains(file.Id)).ExecuteDeleteAsync(token);
     }
 
     private async Task<ImportFileDto> ImportOneAsync(

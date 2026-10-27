@@ -16,6 +16,14 @@ html {
     );
 }
 
+/* Twemoji country flags, CC BY 4.0. Windows does not draw flag emoji on its own. */
+@font-face {
+    font-family: "Twemoji Country Flags";
+    unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E007F;
+    src: url("/fonts/TwemojiCountryFlags.woff2") format("woff2");
+    font-display: swap;
+}
+
 body {
     height: 100%;
     margin: 0;

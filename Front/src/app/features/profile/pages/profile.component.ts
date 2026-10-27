@@ -17,6 +17,7 @@ import {
 } from "@angular/material/list";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { SkeletonComponent } from "@core/skeleton.component";
 import { CliToken } from "@features/profile/models/cli-token.model";
 import { RevokeTokenDialog } from "@features/profile/components/revoke-token.dialog";
 import { ProfileStore } from "@features/profile/stores/profile.store";
@@ -56,6 +57,7 @@ import { firstValueFrom } from "rxjs";
         MatListItemTitle,
         MatListItemLine,
         MatProgressSpinner,
+        SkeletonComponent,
     ],
     templateUrl: "./profile.component.html",
     styleUrl: "./profile.component.scss",

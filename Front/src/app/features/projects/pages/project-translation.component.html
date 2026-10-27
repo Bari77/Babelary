@@ -1,13 +1,12 @@
-@if (projectsStore.error() && !openLocale()) {
+<app-translation-import />
+
+@if (projectsStore.error() && !openLocale() && !importFailed()) {
     <p class="form-error">{{ projectsStore.error() }}</p>
 }
 
-@if (project(); as project) {
-    <div class="legend">
-        @for (item of ["translated", "identical", "empty", "review"]; track item) {
-            <app-translation-status [status]="item" />
-        }
-    </div>
+@if (!project() && !projectsStore.error()) {
+    <app-skeleton [count]="6" />
+} @else if (project(); as project) {
     <section class="languages">
         @for (row of rows(project); track row.locale) {
             <div class="lang-block">
@@ -18,7 +17,7 @@
                         [attr.aria-expanded]="openLocale() === row.locale"
                         (click)="toggle(project.slug, row.locale)"
                     >
-                        <span class="lang-name">{{ localesStore.label(row.locale) }}</span>
+                        <span class="lang-name"><app-locale-flag [code]="row.locale" />{{ localesStore.label(row.locale) }}</span>
                         <span class="lang-count">{{ row.covered() }} / {{ row.total }}</span>
                         <app-translation-meter
                             [translated]="row.translated"
@@ -45,22 +44,26 @@
                         @if (projectsStore.error()) {
                             <p class="form-error">{{ projectsStore.error() }}</p>
                         }
-                        @for (file of projectsStore.fileProgress(); track file.name) {
-                            <a class="file-row" [routerLink]="['/projet', project.slug, 'editeur', row.locale, file.name]">
-                                <span class="lang-name">{{ file.name }}</span>
-                                <span class="lang-count">{{ file.covered() }} / {{ file.total }}</span>
-                                <app-translation-meter
-                                    [translated]="file.translated"
-                                    [total]="file.total"
-                                    [pending]="file.pending"
-                                    [pendingOpen]="file.pendingOpen"
-                                    [chips]="false"
-                                />
-                                <mat-icon>chevron_right</mat-icon>
-                            </a>
-                        } @empty {
+                        @if (filesLoading()) {
+                            <app-skeleton [count]="4" />
+                        } @else if (projectsStore.fileProgress().length === 0) {
                             @if (!projectsStore.error()) {
                                 <p class="empty">{{ "PROJECT.LANGUAGE_EMPTY" | translate }}</p>
+                            }
+                        } @else {
+                            @for (file of projectsStore.fileProgress(); track file.name) {
+                                <a class="file-row" [routerLink]="['/projet', project.slug, 'editeur', row.locale, file.name]">
+                                    <span class="lang-name">{{ file.name }}</span>
+                                    <span class="lang-count">{{ file.covered() }} / {{ file.total }}</span>
+                                    <app-translation-meter
+                                        [translated]="file.translated"
+                                        [total]="file.total"
+                                        [pending]="file.pending"
+                                        [pendingOpen]="file.pendingOpen"
+                                        [chips]="false"
+                                    />
+                                    <mat-icon>chevron_right</mat-icon>
+                                </a>
                             }
                         }
                     </div>

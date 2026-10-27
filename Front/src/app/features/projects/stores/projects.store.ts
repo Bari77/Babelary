@@ -49,6 +49,10 @@ export class ProjectsStore {
 
     public async open(slug: string): Promise<void> {
         this.error.set(null);
+        if (this.current()?.slug !== slug) {
+            this.current.set(null);
+        }
+
         this.pending.set(true);
         try {
             const project = await firstValueFrom(this.projectsService.get(slug));
@@ -173,6 +177,22 @@ export class ProjectsStore {
         } catch (err) {
             this.sourceFiles.set([]);
             this.error.set(this.failure(err));
+        }
+    }
+
+    public async deleteFile(slug: string, name: string): Promise<boolean> {
+        this.error.set(null);
+        try {
+            const updated = await firstValueFrom(this.projectsService.deleteFile(slug, name));
+            this.remember(updated);
+            this.sourceFiles.update((files) => files.filter((file) => file.name !== name));
+            this.fileProgress.update((files) => files.filter((file) => file.name !== name));
+            this.entries.update((entries) => entries.filter((entry) => entry.fileName !== name));
+            this.proposals.update((proposals) => proposals.filter((proposal) => proposal.fileName !== name));
+            return true;
+        } catch (err) {
+            this.error.set(this.failure(err));
+            return false;
         }
     }
 

@@ -34,6 +34,9 @@ public interface IProjects
     /// <summary>Lists the source files of a project the account owns.</summary>
     Task<IReadOnlyList<ProjectFileDto>> ListFilesAsync(Guid accountId, string? project, CancellationToken token);
 
+    /// <summary>Deletes one source file and every key, translation, and proposal that belongs to it.</summary>
+    Task<ProjectDto> DeleteFileAsync(Guid accountId, string? project, string? file, CancellationToken token);
+
     /// <summary>
     /// Imports source JSON files. A file that cannot be read is reported and left unchanged.
     /// When <paramref name="deleteMissingFiles"/> is set, source files absent from this import are removed.
@@ -74,7 +77,7 @@ public interface IProjects
     /// <summary>Progress of each source file for one target locale the account may see.</summary>
     Task<IReadOnlyList<FileProgressDto>> ListFileProgressAsync(Guid accountId, string? project, string? locale, CancellationToken token);
 
-    /// <summary>Keys of one file in one target locale, with the saved value and any proposal.</summary>
+    /// <summary>Keys of one target locale, with the saved value and any proposal. An empty file returns every source file.</summary>
     Task<IReadOnlyList<TranslationEntryDto>> ListEntriesAsync(Guid accountId, string? project, string? locale, string? file, CancellationToken token);
 
     /// <summary>Owner writes the saved value. A member stores a proposal instead.</summary>

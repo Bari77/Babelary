@@ -1,0 +1,131 @@
+<div class="extra">
+    <ng-content />
+</div>
+
+<div
+    class="drop"
+    [class.over]="over()"
+    [class.busy]="busy()"
+    [class.locked]="!canPick()"
+    [attr.aria-disabled]="!canPick()"
+    (click)="openPicker()"
+    (dragenter)="onDragEnter($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+>
+    <input
+        #picker
+        class="picker"
+        type="file"
+        accept=".json,application/json"
+        multiple
+        [attr.aria-label]="'PROJECT.FILES_PICK' | translate"
+        [disabled]="busy() || !canPick()"
+        (change)="onInput($event)"
+        (click)="$event.stopPropagation()"
+    />
+    <span class="drop-icon" aria-hidden="true">
+        <mat-icon>upload_file</mat-icon>
+    </span>
+    <span class="drop-copy">
+        @if (canPick()) {
+            <span class="drop-title">{{ "PROJECT.IMPORT_DROP" | translate }}</span>
+            <span class="drop-hint">{{ "PROJECT.IMPORT_DROP_HINT" | translate }}</span>
+        } @else {
+            <span class="drop-title">{{ "PROJECT.IMPORT_NEED_LOCALE" | translate }}</span>
+        }
+    </span>
+    <button mat-stroked-button type="button" [disabled]="busy() || !canPick()" (click)="openPicker($event)">
+        {{ "PROJECT.FILES_PICK" | translate }}
+    </button>
+</div>
+
+@if (busy()) {
+    <mat-progress-bar mode="indeterminate" />
+    <p class="sr" role="status">{{ "PROJECT.IMPORT_RUNNING" | translate }}</p>
+}
+
+@if (items().length > 0) {
+    <ul class="queue">
+        @for (item of items(); track item.name) {
+            <li class="item" [attr.data-phase]="item.phase">
+                <span class="mark" aria-hidden="true">
+                    @switch (item.phase) {
+                        @case ("running") {
+                            <mat-spinner diameter="20" />
+                        }
+                        @case ("done") {
+                            <mat-icon>check_circle</mat-icon>
+                        }
+                        @case ("warning") {
+                            <mat-icon>warning</mat-icon>
+                        }
+                        @case ("error") {
+                            <mat-icon>error</mat-icon>
+                        }
+                        @default {
+                            <mat-icon>description</mat-icon>
+                        }
+                    }
+                </span>
+                <div class="body">
+                    <div class="line">
+                        <span class="name">{{ item.name }}</span>
+                        <span class="phase">{{ phaseKey[item.phase] | translate }}</span>
+                        @if (item.phase === "ready" && item.size !== undefined) {
+                            <span class="size">{{ formatSize(item.size) }}</span>
+                        }
+                    </div>
+                    @if (item.summaryKey) {
+                        <p class="sr">{{ item.summaryKey | translate: item.summaryParams }}</p>
+                    }
+                    @if (item.stats.length > 0) {
+                        <div class="stats">
+                            @for (stat of item.stats; track stat.key) {
+                                <span class="stat" [class.zero]="stat.value === 0">
+                                    <strong>{{ stat.value }}</strong>
+                                    {{ stat.key | translate }}
+                                </span>
+                            }
+                        </div>
+                    }
+                    @if (item.notes.length > 0) {
+                        <ul class="notes">
+                            @for (note of item.notes; track $index) {
+                                <li>
+                                    @if (note.prefix) {
+                                        <span class="path">{{ note.prefix }}</span>
+                                    }
+                                    {{ note.key | translate: note.params }}
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+                @if (item.phase === "ready") {
+                    <button
+                        mat-icon-button
+                        type="button"
+                        [attr.aria-label]="'PROJECT.IMPORT_REMOVE' | translate: { name: item.name }"
+                        (click)="removed.emit(item.name)"
+                    >
+                        <mat-icon>close</mat-icon>
+                    </button>
+                }
+            </li>
+        }
+    </ul>
+}
+
+@if (error()) {
+    <p class="form-error">{{ error() }}</p>
+}
+
+@if (actionable()) {
+    <div class="confirm">
+        <button mat-flat-button type="button" [disabled]="busy() || !canImport()" (click)="confirmed.emit()">
+            {{ "PROJECT.FILES_IMPORT" | translate }}
+        </button>
+    </div>
+}

@@ -9,6 +9,8 @@ import { MatError, MatFormField, MatLabel } from "@angular/material/form-field";
 import { MatIcon } from "@angular/material/icon";
 import { MatInput } from "@angular/material/input";
 import { ActivatedRoute } from "@angular/router";
+import { SkeletonComponent } from "@core/skeleton.component";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { LocalesStore } from "@features/locales/stores/locales.store";
 import { RemoveMemberDialog } from "@features/projects/components/remove-member.dialog";
 import { ProjectMember } from "@features/projects/models/membership.model";
@@ -39,6 +41,8 @@ import { firstValueFrom } from "rxjs";
         MatIconButton,
         MatIcon,
         MatCheckbox,
+        LocaleFlagComponent,
+        SkeletonComponent,
     ],
     templateUrl: "./project-members.component.html",
     styleUrl: "./project-members.component.scss",
@@ -52,6 +56,7 @@ export class ProjectMembersComponent {
     public readonly linkInviteId = signal<string | null>(null);
     public readonly copied = signal(false);
     public readonly editing = signal<string | null>(null);
+    public readonly loaded = signal(false);
     public readonly inviteLocales = signal<string[]>([]);
     public readonly editLocales = signal<string[]>([]);
     public readonly form = new FormGroup({
@@ -65,7 +70,7 @@ export class ProjectMembersComponent {
     public constructor() {
         void this.localesStore.load();
         if (this.owner() && this.slug) {
-            void this.projectsStore.loadMembers(this.slug);
+            void this.projectsStore.loadMembers(this.slug).finally(() => this.loaded.set(true));
         }
     }
 

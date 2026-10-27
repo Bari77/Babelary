@@ -16,8 +16,13 @@ public partial class ProjectsImpl
     {
         var stored = await RequireVisibleAsync(accountId, project, token);
         var code = await RequireVisibleLocaleAsync(stored, accountId, locale, token);
+        if (string.IsNullOrWhiteSpace(file))
+        {
+            return await LoadAllEntriesAsync(stored.Id, code, token);
+        }
+
         var source = await RequireFileAsync(stored.Id, file, token);
-        return await LoadEntriesAsync(source.Id, code, token);
+        return await LoadEntriesAsync(source.Id, source.Name, code, token);
     }
 
     /// <inheritdoc />
@@ -33,6 +38,7 @@ public partial class ProjectsImpl
         var code = await RequireVisibleLocaleAsync(stored, accountId, locale, token);
         var key = await db.ProjectKeys
             .Include(item => item.Values)
+            .Include(item => item.File)
             .FirstOrDefaultAsync(item => item.Id == keyId && item.File.ProjectId == stored.Id, token)
             ?? throw new NotFoundException("ERR_NOT_FOUND");
         var next = text ?? "";
@@ -77,7 +83,7 @@ public partial class ProjectsImpl
 
         await db.SaveChangesAsync(token);
         var value = key.Values.FirstOrDefault(item => item.Locale == code);
-        return ToEntry(key, value, proposal);
+        return ToEntry(key, value, proposal, key.File.Name);
     }
 
     /// <inheritdoc />
@@ -212,13 +218,39 @@ public partial class ProjectsImpl
         return stored ?? throw new NotFoundException("ERR_NOT_FOUND");
     }
 
-    private async Task<IReadOnlyList<TranslationEntryDto>> LoadEntriesAsync(Guid fileId, string locale, CancellationToken token)
+    private async Task<IReadOnlyList<TranslationEntryDto>> LoadAllEntriesAsync(Guid projectId, string locale, CancellationToken token)
+    {
+        var keys = await db.ProjectKeys
+            .AsNoTracking()
+            .Include(key => key.File)
+            .Where(key => key.File.ProjectId == projectId)
+            .OrderBy(key => key.File.Name)
+            .ThenBy(key => key.Ordinal)
+            .ToListAsync(token);
+        return await MapEntriesAsync(keys, locale, key => key.File.Name, token);
+    }
+
+    private async Task<IReadOnlyList<TranslationEntryDto>> LoadEntriesAsync(Guid fileId, string fileName, string locale, CancellationToken token)
     {
         var keys = await db.ProjectKeys
             .AsNoTracking()
             .Where(key => key.FileId == fileId)
             .OrderBy(key => key.Ordinal)
             .ToListAsync(token);
+        return await MapEntriesAsync(keys, locale, _ => fileName, token);
+    }
+
+    private async Task<IReadOnlyList<TranslationEntryDto>> MapEntriesAsync(
+        List<ProjectKey> keys,
+        string locale,
+        Func<ProjectKey, string> fileName,
+        CancellationToken token)
+    {
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
         var keyIds = keys.Select(key => key.Id).ToArray();
         var values = await db.ProjectValues
             .AsNoTracking()
@@ -235,7 +267,8 @@ public partial class ProjectsImpl
             .Select(key => ToEntry(
                 key,
                 valueByKey.GetValueOrDefault(key.Id),
-                proposalByKey.GetValueOrDefault(key.Id)))
+                proposalByKey.GetValueOrDefault(key.Id),
+                fileName(key)))
             .ToArray();
     }
 
@@ -289,12 +322,13 @@ public partial class ProjectsImpl
         value.UpdatedAt = DateTime.UtcNow;
     }
 
-    private static TranslationEntryDto ToEntry(ProjectKey key, ProjectValue? value, ProjectProposal? proposal)
+    private static TranslationEntryDto ToEntry(ProjectKey key, ProjectValue? value, ProjectProposal? proposal, string fileName)
     {
         var text = value?.Text ?? "";
         return new TranslationEntryDto
         {
             KeyId = key.Id,
+            FileName = fileName,
             Path = key.Path,
             SourceValue = key.SourceValue,
             Text = text,

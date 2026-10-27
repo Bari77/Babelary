@@ -13,7 +13,7 @@
     />
     <app-choice-menu
         [label]="'PROJECT.SWITCH_FILE' | translate"
-        [value]="file()"
+        [value]="fileLabel()"
         [current]="file()"
         [searchLabel]="'PROJECT.SWITCH_FILE_SEARCH' | translate"
         [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
@@ -30,7 +30,8 @@
     >
         <mat-icon>download</mat-icon>
     </button>
-    @if (currentFile(); as item) {
+    @if (meter().total > 0) {
+        @let item = meter();
         <app-translation-meter
             [translated]="item.translated"
             [total]="item.total"
@@ -71,13 +72,20 @@
     />
 }
 
-@if (ready()) {
+@if (!ready()) {
+    <app-skeleton shape="keys" [count]="5" />
+} @else {
 <section class="keys">
     @for (entry of pageEntries(); track entry.keyId) {
         <article class="key">
             <header>
                 <app-translation-status [status]="entry.status" />
-                <span class="path">{{ entry.path }}</span>
+                <span class="path">
+                    @if (!file()) {
+                        <span class="file-name">{{ entry.fileName }}</span>
+                    }
+                    {{ entry.path }}
+                </span>
                 <span class="actions">
                     <button
                         mat-icon-button

@@ -69,6 +69,11 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
     public Task<IReadOnlyList<ProjectFileDto>> ListFiles(string? project, CancellationToken token)
         => projects.ListFilesAsync(AccountSignIn.RequireAccountId(User), project, token);
 
+    /// <summary>Deletes one source file and the keys that belong to it.</summary>
+    [HttpPost("deleteFile")]
+    public Task<ProjectDto> DeleteFile(string? project, string? file, CancellationToken token)
+        => projects.DeleteFileAsync(AccountSignIn.RequireAccountId(User), project, file, token);
+
     /// <summary>Imports source JSON files for the project owner.</summary>
     [HttpPost("importSources")]
     public Task<ImportSourcesDto> ImportSources(
@@ -117,7 +122,7 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
     public Task<IReadOnlyList<FileProgressDto>> ListFileProgress(string? project, string? locale, CancellationToken token)
         => projects.ListFileProgressAsync(AccountSignIn.RequireAccountId(User), project, locale, token);
 
-    /// <summary>Keys of one file in one target locale.</summary>
+    /// <summary>Keys of one target locale. An empty file returns every source file.</summary>
     [HttpGet("listEntries")]
     public Task<IReadOnlyList<TranslationEntryDto>> ListEntries(string? project, string? locale, string? file, CancellationToken token)
         => projects.ListEntriesAsync(AccountSignIn.RequireAccountId(User), project, locale, file, token);

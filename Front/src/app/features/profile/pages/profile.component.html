@@ -115,7 +115,9 @@
                 </button>
             </form>
 
-            @if (profileStore.tokens().length === 0) {
+            @if (!profileStore.tokensLoaded()) {
+                <app-skeleton [count]="3" />
+            } @else if (profileStore.tokens().length === 0) {
                 <p>{{ "PROFILE.EMPTY_TOKENS" | translate }}</p>
             } @else {
                 <mat-list>

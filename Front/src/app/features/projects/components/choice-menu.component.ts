@@ -4,6 +4,7 @@ import { MatIcon } from "@angular/material/icon";
 import { MatInput } from "@angular/material/input";
 import { MatMenu, MatMenuItem, MatMenuTrigger } from "@angular/material/menu";
 import { MatTooltip } from "@angular/material/tooltip";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { matchesPrefix } from "@features/locales/models/locale.model";
 
 /**
@@ -22,7 +23,7 @@ export interface ChoiceOption {
 @Component({
     selector: "app-choice-menu",
     standalone: true,
-    imports: [MatMenu, MatMenuItem, MatMenuTrigger, MatIcon, MatTooltip, MatFormField, MatLabel, MatInput],
+    imports: [MatMenu, MatMenuItem, MatMenuTrigger, MatIcon, MatTooltip, MatFormField, MatLabel, MatInput, LocaleFlagComponent],
     template: `
         <button
             type="button"
@@ -34,6 +35,7 @@ export interface ChoiceOption {
             (menuClosed)="query.set('')"
         >
             <span class="kind">{{ label() }}</span>
+            <app-locale-flag [code]="current()" />
             <span class="current">{{ value() }}</span>
             <mat-icon>expand_more</mat-icon>
         </button>
@@ -50,6 +52,7 @@ export interface ChoiceOption {
                         <mat-icon>check</mat-icon>
                     }
                     <span class="choice">
+                        <app-locale-flag [code]="option.id" />
                         <span class="choice-name">{{ option.name }}</span>
                         @if (option.detail) {
                             <span class="choice-count">{{ option.detail }}</span>

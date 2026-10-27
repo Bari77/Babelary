@@ -1,0 +1,22 @@
+:host {
+    display: contents;
+}
+
+.importer {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+h2 {
+    margin: 0;
+    font: var(--mat-sys-title-medium);
+}
+
+.hint,
+.empty {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+}

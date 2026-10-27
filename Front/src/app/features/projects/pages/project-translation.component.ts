@@ -1,10 +1,12 @@
-import { Component, computed, inject, signal } from "@angular/core";
+import { Component, computed, inject, signal, viewChild } from "@angular/core";
 import { MatIcon } from "@angular/material/icon";
 import { MatTooltip } from "@angular/material/tooltip";
 import { RouterLink } from "@angular/router";
+import { SkeletonComponent } from "@core/skeleton.component";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { LocalesStore } from "@features/locales/stores/locales.store";
+import { TranslationImportComponent } from "@features/projects/components/translation-import.component";
 import { TranslationMeterComponent } from "@features/projects/components/translation-meter.component";
-import { TranslationStatusComponent } from "@features/projects/components/translation-status.component";
 import { LocaleProgress, Project } from "@features/projects/models/project.model";
 import { ProjectsStore } from "@features/projects/stores/projects.store";
 import { TranslateModule } from "@ngx-translate/core";
@@ -15,7 +17,16 @@ import { TranslateModule } from "@ngx-translate/core";
 @Component({
     selector: "app-project-translation",
     standalone: true,
-    imports: [TranslateModule, MatIcon, MatTooltip, RouterLink, TranslationMeterComponent, TranslationStatusComponent],
+    imports: [
+        TranslateModule,
+        MatIcon,
+        MatTooltip,
+        RouterLink,
+        TranslationMeterComponent,
+        LocaleFlagComponent,
+        TranslationImportComponent,
+        SkeletonComponent,
+    ],
     templateUrl: "./project-translation.component.html",
     styleUrl: "./project-translation.component.scss",
 })
@@ -23,8 +34,12 @@ export class ProjectTranslationComponent {
     public readonly projectsStore = inject(ProjectsStore);
     public readonly localesStore = inject(LocalesStore);
     public readonly openLocale = signal<string | null>(null);
+    public readonly filesLoading = signal(false);
     public readonly exporting = signal<string | null>(null);
     public readonly project = computed(() => this.projectsStore.current());
+    public readonly importFailed = computed(() => this.importer()?.failed() === true);
+
+    private readonly importer = viewChild(TranslationImportComponent);
 
     public constructor() {
         void this.localesStore.load();
@@ -68,6 +83,8 @@ export class ProjectTranslationComponent {
         }
 
         this.openLocale.set(locale);
+        this.filesLoading.set(true);
         await this.projectsStore.loadFileProgress(slug, locale, true);
+        this.filesLoading.set(false);
     }
 }

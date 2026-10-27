@@ -8,9 +8,11 @@ import { MatSidenav, MatSidenavContainer, MatSidenavContent } from "@angular/mat
 import { MatToolbar } from "@angular/material/toolbar";
 import { MatTooltip } from "@angular/material/tooltip";
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { localeLabel } from "@features/locales/models/locale.model";
 import { ProjectsStore } from "@features/projects/stores/projects.store";
 import { SessionStore } from "@features/session/stores/session.store";
+import { siteVersion } from "@app/version";
 import { TranslateModule } from "@ngx-translate/core";
 import { filter, map, startWith } from "rxjs";
 
@@ -18,6 +20,7 @@ interface ShellCrumb {
     path: string;
     key?: string;
     text?: string;
+    locale?: string;
 }
 
 /**
@@ -42,6 +45,7 @@ interface ShellCrumb {
         MatIcon,
         MatIconButton,
         MatTooltip,
+        LocaleFlagComponent,
     ],
     templateUrl: "./shell.component.html",
     styleUrl: "./shell.component.scss",
@@ -50,6 +54,7 @@ export class ShellComponent {
     private static readonly navKey = "babelary.nav.collapsed";
 
     public readonly sessionStore = inject(SessionStore);
+    public readonly version = siteVersion;
     public readonly handset = toSignal(
         inject(BreakpointObserver)
             .observe(Breakpoints.Handset)
@@ -119,15 +124,16 @@ export class ShellComponent {
             const slug = decodeURIComponent(match[1]);
             const text = current?.slug === slug ? current.name : slug;
             const projectPath = `/projet/${match[1]}`;
-            if (match[2] === "editeur" && match[3] && match[4]) {
+            if (match[2] === "editeur" && match[3]) {
                 const code = decodeURIComponent(match[3]);
                 const label = localeLabel(code) || code;
-                return [
+                const crumbs: ShellCrumb[] = [
                     { key: "GLOBAL.PROJECTS", path: "/" },
                     { text, path: projectPath },
-                    { text: label, path: projectPath },
-                    { text: decodeURIComponent(match[4]), path },
+                    { text: label, locale: code, path: projectPath },
                 ];
+                crumbs.push(match[4] ? { text: decodeURIComponent(match[4]), path } : { key: "PROJECT.FILE_ALL", path });
+                return crumbs;
             }
 
             if (match[2] === "propositions") {
@@ -138,7 +144,7 @@ export class ShellComponent {
                 ];
                 if (match[3]) {
                     const code = decodeURIComponent(match[3]);
-                    crumbs.push({ text: localeLabel(code) || code, path });
+                    crumbs.push({ text: localeLabel(code) || code, locale: code, path });
                 }
                 return crumbs;
             }

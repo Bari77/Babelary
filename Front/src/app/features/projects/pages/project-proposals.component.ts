@@ -9,6 +9,7 @@ import { MatInput } from "@angular/material/input";
 import { MatProgressBar } from "@angular/material/progress-bar";
 import { MatTooltip } from "@angular/material/tooltip";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
+import { SkeletonComponent } from "@core/skeleton.component";
 import { localeLabel } from "@features/locales/models/locale.model";
 import { ChoiceMenuComponent, ChoiceOption } from "@features/projects/components/choice-menu.component";
 import { ListPagerComponent, pageWindow } from "@features/projects/components/list-pager.component";
@@ -40,6 +41,7 @@ import { firstValueFrom } from "rxjs";
         MatInput,
         MatProgressBar,
         ChoiceMenuComponent,
+        SkeletonComponent,
         ListPagerComponent,
         TranslationMeterComponent,
         TranslationStatusComponent,
@@ -56,6 +58,7 @@ export class ProjectProposalsComponent {
     public readonly selected = signal<ReadonlySet<string>>(new Set());
     public readonly rowError = signal<Record<string, string>>({});
     public readonly busy = signal(false);
+    public readonly ready = signal(false);
     public readonly slug = signal("");
     public readonly locale = signal("");
     public readonly language = computed(() =>
@@ -134,19 +137,29 @@ export class ProjectProposalsComponent {
     private readonly dialog = inject(MatDialog);
     private readonly translate = inject(TranslateService);
     private anchor = 0;
+    private request = 0;
 
     public constructor() {
         this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
             const slug = this.route.parent?.snapshot.paramMap.get("project") ?? "";
             const locale = params.get("locale") ?? "";
+            const request = ++this.request;
             this.slug.set(slug);
             this.locale.set(locale);
             this.file.set("");
             this.pageIndex.set(0);
             this.selected.set(new Set());
             this.rowError.set({});
-            void this.projectsStore.loadProposals(slug, locale);
+            this.ready.set(false);
+            void this.openList(slug, locale, request);
         });
+    }
+
+    private async openList(slug: string, locale: string, request: number): Promise<void> {
+        await this.projectsStore.loadProposals(slug, locale);
+        if (request === this.request) {
+            this.ready.set(true);
+        }
     }
 
     public async openLocale(code: string): Promise<void> {

@@ -67,6 +67,14 @@ mat-toolbar {
     margin-bottom: 12px;
 }
 
+.nav-version {
+    margin: auto 0 0;
+    padding-top: 12px;
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-small);
+    text-align: center;
+}
+
 .brand-home {
     display: flex;
     align-items: center;

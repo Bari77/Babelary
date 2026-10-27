@@ -8,6 +8,8 @@ import { MatInput } from "@angular/material/input";
 import { MatListOption, MatSelectionList } from "@angular/material/list";
 import { MatTooltip } from "@angular/material/tooltip";
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
+import { SkeletonComponent } from "@core/skeleton.component";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { Locale } from "@features/locales/models/locale.model";
 import { LocalesStore } from "@features/locales/stores/locales.store";
 import { RemoveTargetsDialog } from "@features/projects/components/remove-targets.dialog";
@@ -32,6 +34,8 @@ import { map, firstValueFrom } from "rxjs";
         MatIconButton,
         MatIcon,
         MatTooltip,
+        LocaleFlagComponent,
+        SkeletonComponent,
     ],
     templateUrl: "./target-languages.component.html",
     styleUrl: "./target-languages.component.scss",

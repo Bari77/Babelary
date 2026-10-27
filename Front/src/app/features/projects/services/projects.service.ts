@@ -51,6 +51,10 @@ export class ProjectsService extends BaseService {
         return this.httpList(ProjectFile, "listFiles", new HttpParams().set("project", project));
     }
 
+    public deleteFile(project: string, file: string): Observable<Project> {
+        return this.httpPost(Project, "deleteFile", {}, new HttpParams().set("project", project).set("file", file));
+    }
+
     public importSources(project: string, files: { name: string; content: string }[]): Observable<ImportSourcesResult> {
         return this.httpPost(ImportSourcesResult, "importSources", { files }, new HttpParams().set("project", project));
     }
@@ -116,11 +120,12 @@ export class ProjectsService extends BaseService {
     }
 
     public listEntries(project: string, locale: string, file: string): Observable<TranslationEntry[]> {
-        return this.httpList(
-            TranslationEntry,
-            "listEntries",
-            new HttpParams().set("project", project).set("locale", locale).set("file", file),
-        );
+        let params = new HttpParams().set("project", project).set("locale", locale);
+        if (file) {
+            params = params.set("file", file);
+        }
+
+        return this.httpList(TranslationEntry, "listEntries", params);
     }
 
     public saveTranslation(project: string, locale: string, body: { keyId: string; text: string }): Observable<TranslationEntry> {

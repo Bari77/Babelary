@@ -6,6 +6,9 @@ public class TranslationEntryDto
     /// <summary>Key identifier.</summary>
     public Guid KeyId { get; set; }
 
+    /// <summary>Source file name, such as <c>account.json</c>.</summary>
+    public string FileName { get; set; } = "";
+
     /// <summary>Dotted path.</summary>
     public string Path { get; set; } = "";
 

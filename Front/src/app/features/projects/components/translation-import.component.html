@@ -1,0 +1,32 @@
+@if (owner()) {
+    <section class="importer">
+        <header>
+            <h2>{{ "PROJECT.IMPORT" | translate }}</h2>
+            <p class="hint">{{ "PROJECT.TRANSLATIONS_HINT" | translate }}</p>
+        </header>
+        @if (localeOptions().length === 0) {
+            <p class="empty">{{ "PROJECT.TRANSLATIONS_EMPTY_LOCALES" | translate }}</p>
+        } @else {
+            <app-import-panel
+                [items]="items()"
+                [busy]="busy()"
+                [canPick]="locale() !== ''"
+                [canImport]="locale() !== '' && selected().length > 0"
+                [error]="failed() ? projectsStore.error() : null"
+                (picked)="onFiles($event)"
+                (removed)="remove($event)"
+                (confirmed)="import()"
+            >
+                <app-choice-menu
+                    [label]="'PROJECT.SWITCH_LOCALE' | translate"
+                    [value]="locale() ? localesStore.label(locale()) : ('PROJECT.TRANSLATIONS_PICK_LOCALE' | translate)"
+                    [current]="locale()"
+                    [searchLabel]="'PROJECT.SWITCH_LOCALE_SEARCH' | translate"
+                    [emptyLabel]="'PROJECT.SWITCH_EMPTY' | translate"
+                    [options]="localeOptions()"
+                    (picked)="locale.set($event)"
+                />
+            </app-import-panel>
+        }
+    </section>
+}

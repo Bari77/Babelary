@@ -4,6 +4,7 @@
 export class TranslationEntry {
     public constructor(
         public keyId: string,
+        public fileName: string,
         public path: string,
         public sourceValue: string,
         public text: string,
@@ -17,6 +18,7 @@ export class TranslationEntry {
     public static fromDto(dto: TranslationEntryDto): TranslationEntry {
         return new TranslationEntry(
             dto.keyId,
+            dto.fileName ?? "",
             dto.path,
             dto.sourceValue,
             dto.text,
@@ -34,6 +36,7 @@ export class TranslationEntry {
  */
 export interface TranslationEntryDto {
     keyId: string;
+    fileName?: string;
     path: string;
     sourceValue: string;
     text: string;

@@ -20,17 +20,21 @@
             <h3>{{ "PROJECT.TARGETS_AVAILABLE" | translate }}</h3>
             <span class="count">{{ lists().available.length }}</span>
         </header>
+        @if (!localesStore.loaded()) {
+            <app-skeleton [count]="6" />
+        } @else {
         <mat-selection-list
             #availableList
             multiple
             (selectionChange)="onAvailableSelection(availableList)"
         >
             @for (locale of lists().available; track locale.code) {
-                <mat-list-option [value]="locale.code" togglePosition="before">{{ locale.label }}</mat-list-option>
+                <mat-list-option [value]="locale.code" togglePosition="before"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-list-option>
             }
         </mat-selection-list>
         @if (lists().available.length === 0 && query()) {
             <p class="empty">{{ "PROJECT.SOURCE_EMPTY" | translate }}</p>
+        }
         }
     </section>
 
@@ -84,7 +88,7 @@
         </header>
         <mat-selection-list #projectList multiple (selectionChange)="onProjectSelection(projectList)">
             @for (locale of lists().chosen; track locale.code) {
-                <mat-list-option [value]="locale.code" togglePosition="before">{{ locale.label }}</mat-list-option>
+                <mat-list-option [value]="locale.code" togglePosition="before"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-list-option>
             }
         </mat-selection-list>
         @if (lists().chosen.length === 0) {

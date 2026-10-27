@@ -15,8 +15,10 @@ import {
     MatTable,
 } from "@angular/material/table";
 import { RouterLink } from "@angular/router";
+import { SkeletonComponent } from "@core/skeleton.component";
 import { HomeStore } from "@features/home/stores/home.store";
 import { TranslationMeterComponent } from "@features/projects/components/translation-meter.component";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { LocalesStore } from "@features/locales/stores/locales.store";
 import { ProjectsStore } from "@features/projects/stores/projects.store";
 import { SessionStore } from "@features/session/stores/session.store";
@@ -46,6 +48,8 @@ import { TranslateModule } from "@ngx-translate/core";
         MatRow,
         MatRowDef,
         TranslationMeterComponent,
+        LocaleFlagComponent,
+        SkeletonComponent,
     ],
     templateUrl: "./home.component.html",
     styleUrl: "./home.component.scss",

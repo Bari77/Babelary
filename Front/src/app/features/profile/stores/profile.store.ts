@@ -17,6 +17,7 @@ export class ProfileStore {
     public readonly passwordError = signal<string | null>(null);
     public readonly tokenError = signal<string | null>(null);
     public readonly pending = signal(false);
+    public readonly tokensLoaded = signal(false);
 
     private readonly profileService = inject(ProfileService);
     private readonly tokensService = inject(TokensService);
@@ -28,6 +29,8 @@ export class ProfileStore {
             this.tokens.set(await firstValueFrom(this.tokensService.list()));
         } catch (err) {
             this.tokenError.set(this.failure(err));
+        } finally {
+            this.tokensLoaded.set(true);
         }
     }
 

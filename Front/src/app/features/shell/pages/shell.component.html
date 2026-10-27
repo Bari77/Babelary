@@ -66,6 +66,7 @@
                     <span matListItemTitle>{{ "GLOBAL.PROFILE" | translate }}</span>
                 </a>
             </mat-nav-list>
+            <p class="nav-version">v{{ version }}</p>
         </div>
     </mat-sidenav>
 
@@ -79,10 +80,10 @@
             <nav class="crumbs" [attr.aria-label]="'GLOBAL.BREADCRUMB' | translate">
                 @for (crumb of crumbs(); track crumb.path; let last = $last) {
                     @if (!last) {
-                        <a [routerLink]="crumb.path">{{ crumb.text ?? (crumb.key | translate) }}</a>
+                        <a [routerLink]="crumb.path"><app-locale-flag [code]="crumb.locale ?? ''" />{{ crumb.text ?? (crumb.key | translate) }}</a>
                         <mat-icon class="crumb-sep" aria-hidden="true">chevron_right</mat-icon>
                     } @else {
-                        <span class="crumb-current" aria-current="page">{{ crumb.text ?? (crumb.key | translate) }}</span>
+                        <span class="crumb-current" aria-current="page"><app-locale-flag [code]="crumb.locale ?? ''" />{{ crumb.text ?? (crumb.key | translate) }}</span>
                     }
                 }
             </nav>
