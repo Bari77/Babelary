@@ -1,3 +1,7 @@
+## [v0.4.1] - 2026-10-27
+
+Le site transmet /api à l'API. Cette adresse répondait 404.
+
 ## [v0.4.0] - 2026-10-27
 
 La page /health indique l'état du site, de l'API et de la base. Elle est en bas du menu. Les barres d'une liste de fichiers ont toutes la même longueur.
