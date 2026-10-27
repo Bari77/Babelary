@@ -6,7 +6,6 @@ import { provideRouter } from "@angular/router";
 import { credentialsInterceptor } from "@core/http/credentials.interceptor";
 import { errorInterceptor } from "@core/http/error.interceptor";
 import { HealthService } from "@features/home/services/health.service";
-import { HomeStore } from "@features/home/stores/home.store";
 import { LocalesService } from "@features/locales/services/locales.service";
 import { LocalesStore } from "@features/locales/stores/locales.store";
 import { ProfileService } from "@features/profile/services/profile.service";
@@ -41,7 +40,6 @@ export const appConfig: ApplicationConfig = {
         ProfileStore,
         ProjectsService,
         ProjectsStore,
-        HomeStore,
         {
             provide: TRANSLATE_HTTP_LOADER_CONFIG,
             useValue: {

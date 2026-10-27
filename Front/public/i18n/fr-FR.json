@@ -201,9 +201,30 @@
     },
     "HOME": {
         "EMPTY": "Aucun projet.",
-        "LEAD": "Les projets de cette instance apparaîtront ici.",
-        "API_READY": "L'API répond et la base est joignable.",
-        "API_DOWN": "L'API ne joint pas encore la base."
+        "LEAD": "Les projets de cette instance apparaîtront ici."
+    },
+    "HEALTH": {
+        "TITLE": "Santé",
+        "LEAD": "État des services de cette instance.",
+        "ALL_OK": "Tout fonctionne.",
+        "DEGRADED": "Un service ne répond pas.",
+        "CHECKING": "Vérification des services.",
+        "REFRESH": "Actualiser",
+        "STATE_OK": "Opérationnel",
+        "STATE_DOWN": "En panne",
+        "STATE_UNKNOWN": "Inconnu",
+        "STATE_LOADING": "Vérification",
+        "WEB": "Site",
+        "WEB_OK": "Les pages se chargent.",
+        "API": "API",
+        "API_OK": "L'API répond.",
+        "API_DOWN": "L'API ne répond pas.",
+        "API_LOADING": "Interrogation de l'API.",
+        "DATABASE": "Base de données",
+        "DATABASE_OK": "La base est joignable.",
+        "DATABASE_DOWN": "La base n'est pas joignable.",
+        "DATABASE_UNKNOWN": "La base n'a pas pu être vérifiée.",
+        "DATABASE_LOADING": "Interrogation de la base."
     },
     "PROFILE": {
         "OWNER": "Propriétaire d'instance",

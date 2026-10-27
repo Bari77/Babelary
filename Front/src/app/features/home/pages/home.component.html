@@ -61,22 +61,4 @@
     @if (projectsStore.error()) {
         <p class="form-error">{{ projectsStore.error() }}</p>
     }
-
-    <mat-card>
-        <mat-card-content class="status">
-            @if (homeStore.health.isLoading() && !homeStore.health.hasValue()) {
-                <app-skeleton [count]="1" />
-            } @else if (homeStore.health.error() || (homeStore.health.hasValue() && !homeStore.health.value()?.database)) {
-                <mat-icon>cloud_off</mat-icon>
-                <p>{{ "HOME.API_DOWN" | translate }}</p>
-            } @else if (homeStore.health.value()?.database) {
-                <mat-icon>cloud_done</mat-icon>
-                <p>{{ "HOME.API_READY" | translate }}</p>
-            }
-            <button mat-stroked-button type="button" (click)="homeStore.reload()">
-                <mat-icon>refresh</mat-icon>
-                {{ "GLOBAL.RETRY" | translate }}
-            </button>
-        </mat-card-content>
-    </mat-card>
 </main>

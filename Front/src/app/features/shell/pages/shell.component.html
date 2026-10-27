@@ -65,6 +65,18 @@
                     <mat-icon matListItemIcon>person</mat-icon>
                     <span matListItemTitle>{{ "GLOBAL.PROFILE" | translate }}</span>
                 </a>
+                <a
+                    mat-list-item
+                    routerLink="/health"
+                    routerLinkActive="mdc-list-item--activated"
+                    [attr.aria-label]="'HEALTH.TITLE' | translate"
+                    [matTooltip]="iconOnly() ? ('HEALTH.TITLE' | translate) : ''"
+                    matTooltipPosition="right"
+                    (click)="closeIfHandset(nav)"
+                >
+                    <mat-icon matListItemIcon>monitor_heart</mat-icon>
+                    <span matListItemTitle>{{ "HEALTH.TITLE" | translate }}</span>
+                </a>
             </mat-nav-list>
             <p class="nav-version">v{{ version }}</p>
         </div>

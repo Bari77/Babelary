@@ -1,0 +1,45 @@
+<main class="page health">
+    <header [attr.class]="'summary ' + summary().tone" role="status">
+        @if (summary().tone === "loading") {
+            <mat-spinner diameter="22" />
+        } @else {
+            <mat-icon>{{ summary().tone === "ok" ? "check_circle" : "error" }}</mat-icon>
+        }
+        <div>
+            <h1>{{ "HEALTH.TITLE" | translate }}</h1>
+            <p>{{ summary().key | translate }}</p>
+        </div>
+        <button mat-stroked-button type="button" [disabled]="pending()" (click)="refresh()">
+            @if (pending()) {
+                <mat-spinner diameter="18" />
+            } @else {
+                <mat-icon>refresh</mat-icon>
+            }
+            {{ "HEALTH.REFRESH" | translate }}
+        </button>
+    </header>
+
+    <p class="lead">{{ "HEALTH.LEAD" | translate }}</p>
+
+    <ul class="services">
+        @for (item of rows(); track item.id) {
+            <li [attr.class]="'service ' + item.tone">
+                <span class="mark" aria-hidden="true">
+                    <mat-icon>{{ item.icon }}</mat-icon>
+                </span>
+                <span class="copy">
+                    <span class="name">{{ item.name | translate }}</span>
+                    <span class="detail">{{ item.detail | translate }}</span>
+                </span>
+                <span class="state">
+                    @if (item.tone === "loading") {
+                        <mat-spinner diameter="16" />
+                    } @else {
+                        <mat-icon>{{ item.tone === "ok" ? "check_circle" : item.tone === "down" ? "error" : "help" }}</mat-icon>
+                    }
+                    {{ item.state | translate }}
+                </span>
+            </li>
+        }
+    </ul>
+</main>

@@ -112,6 +112,10 @@ export class ShellComponent {
             return [{ key: "GLOBAL.PROFILE", path: "/profil" }];
         }
 
+        if (path === "/health") {
+            return [{ key: "HEALTH.TITLE", path: "/health" }];
+        }
+
         if (path === "/projet/nouveau") {
             return [
                 { key: "GLOBAL.PROJECTS", path: "/" },

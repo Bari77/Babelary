@@ -44,7 +44,7 @@
 .lang-row,
 .file-row {
     display: grid;
-    grid-template-columns: minmax(8rem, 1.2fr) auto minmax(5rem, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 8.5rem minmax(7rem, 14rem) auto;
     gap: 8px 12px;
     align-items: center;
     width: 100%;
@@ -64,12 +64,17 @@ button.lang-row,
 }
 
 .lang-name {
+    overflow: hidden;
     font: var(--mat-sys-body-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lang-count {
     color: var(--mat-sys-on-surface-variant);
     font: var(--mat-sys-label-medium);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
 }
 
 .files {

@@ -1,0 +1,136 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+.health {
+    max-width: 40rem;
+}
+
+.summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+}
+
+.summary h1 {
+    margin: 0;
+    font: var(--mat-sys-title-large);
+}
+
+.summary p {
+    margin: 2px 0 0;
+}
+
+.summary button {
+    margin-left: auto;
+}
+
+.lead {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.services {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.service {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+}
+
+.mark {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.name {
+    font: var(--mat-sys-title-small);
+}
+
+.detail {
+    color: var(--mat-sys-on-surface-variant);
+}
+
+.state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font: var(--mat-sys-label-large);
+    white-space: nowrap;
+}
+
+.state mat-icon,
+.summary > mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+.ok {
+    color: var(--status-ok);
+    background: var(--status-ok-bg);
+    border-color: color-mix(in srgb, var(--status-ok) 45%, transparent);
+}
+
+.down {
+    color: var(--status-bad);
+    background: var(--status-bad-bg);
+    border-color: color-mix(in srgb, var(--status-bad) 45%, transparent);
+}
+
+.unknown {
+    color: var(--status-warn);
+    background: var(--status-warn-bg);
+    border-color: color-mix(in srgb, var(--status-warn) 45%, transparent);
+}
+
+.loading {
+    color: var(--mat-sys-on-surface-variant);
+    background: var(--mat-sys-surface-container);
+    border-color: var(--mat-sys-outline-variant);
+}
+
+.ok .detail,
+.down .detail,
+.unknown .detail,
+.loading .detail,
+.summary p {
+    color: var(--mat-sys-on-surface);
+}
+
+@media (max-width: 640px) {
+    .summary,
+    .service {
+        flex-wrap: wrap;
+    }
+
+    .summary button,
+    .state {
+        margin-left: 0;
+    }
+}

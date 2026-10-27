@@ -32,6 +32,10 @@ export const routes: Routes = [
                 loadComponent: () => import("@features/profile/pages/profile.component").then((m) => m.ProfileComponent),
             },
             {
+                path: "health",
+                loadComponent: () => import("@features/home/pages/health.component").then((m) => m.HealthComponent),
+            },
+            {
                 path: "projet/nouveau",
                 loadComponent: () => import("@features/projects/pages/project.component").then((m) => m.ProjectComponent),
                 children: [

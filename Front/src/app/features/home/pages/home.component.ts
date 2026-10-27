@@ -16,7 +16,6 @@ import {
 } from "@angular/material/table";
 import { RouterLink } from "@angular/router";
 import { SkeletonComponent } from "@core/skeleton.component";
-import { HomeStore } from "@features/home/stores/home.store";
 import { TranslationMeterComponent } from "@features/projects/components/translation-meter.component";
 import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { LocalesStore } from "@features/locales/stores/locales.store";
@@ -56,7 +55,6 @@ import { TranslateModule } from "@ngx-translate/core";
 })
 export class HomeComponent {
     public readonly columns = ["name", "sourceLocale", "targetCount", "progress"];
-    public readonly homeStore = inject(HomeStore);
     public readonly projectsStore = inject(ProjectsStore);
     public readonly localesStore = inject(LocalesStore);
     public readonly sessionStore = inject(SessionStore);
