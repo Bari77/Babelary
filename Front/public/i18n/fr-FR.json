@@ -228,6 +228,8 @@
     },
     "PROFILE": {
         "OWNER": "Propriétaire d'instance",
+        "LANGUAGE": "Langue",
+        "LANGUAGE_HINT": "Cette langue est enregistrée sur cet appareil.",
         "NAME_TITLE": "Nom affiché",
         "PASSWORD_TITLE": "Mot de passe",
         "CURRENT": "Mot de passe actuel",

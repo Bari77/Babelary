@@ -9,6 +9,7 @@ import { MatError, MatFormField, MatLabel } from "@angular/material/form-field";
 import { MatIcon } from "@angular/material/icon";
 import { MatInput } from "@angular/material/input";
 import { ActivatedRoute } from "@angular/router";
+import { InterfaceLocale } from "@core/i18n/interface-locale";
 import { SkeletonComponent } from "@core/skeleton.component";
 import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { LocalesStore } from "@features/locales/stores/locales.store";
@@ -49,6 +50,7 @@ import { firstValueFrom } from "rxjs";
 })
 export class ProjectMembersComponent {
     public readonly projectsStore = inject(ProjectsStore);
+    public readonly interfaceLocale = inject(InterfaceLocale);
     public readonly localesStore = inject(LocalesStore);
     public readonly owner = computed(() => this.sessionStore.account()?.isInstanceOwner === true);
     public readonly project = computed(() => this.projectsStore.current());

@@ -1,0 +1,5 @@
+base_url: https://babelary.bariserv.net
+project: babelary
+source_locale: en-US
+base_path: ./public/i18n
+layout: locale

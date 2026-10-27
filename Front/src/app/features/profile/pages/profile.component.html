@@ -7,6 +7,30 @@
 
     <mat-card>
         <mat-card-header>
+            <mat-card-title>{{ "PROFILE.LANGUAGE" | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <mat-form-field class="language">
+                <mat-label>{{ "PROFILE.LANGUAGE" | translate }}</mat-label>
+                <mat-select [value]="interfaceLocale.code()" (selectionChange)="chooseLanguage($event.value)">
+                    <mat-select-trigger>
+                        <app-locale-flag [code]="interfaceLocale.code()" />
+                        {{ languageLabel(interfaceLocale.code()) }}
+                    </mat-select-trigger>
+                    @for (code of languages; track code) {
+                        <mat-option [value]="code">
+                            <app-locale-flag [code]="code" />
+                            {{ languageLabel(code) }}
+                        </mat-option>
+                    }
+                </mat-select>
+                <mat-hint>{{ "PROFILE.LANGUAGE_HINT" | translate }}</mat-hint>
+            </mat-form-field>
+        </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+        <mat-card-header>
             <mat-card-title>{{ "PROFILE.NAME_TITLE" | translate }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
@@ -125,7 +149,7 @@
                         <mat-list-item>
                             <mat-icon matListItemIcon>key</mat-icon>
                             <span matListItemTitle>{{ token.name }}</span>
-                            <span matListItemLine>{{ token.createdAt | date: "longDate" }}</span>
+                            <span matListItemLine>{{ token.createdAt | date: "longDate" : undefined : interfaceLocale.code() }}</span>
                             <button
                                 mat-icon-button
                                 type="button"

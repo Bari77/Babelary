@@ -10,7 +10,7 @@ depends_on: [FEAT-01, FEAT-02, FEAT-03]
 
 ## Intention
 
-Le traducteur fait son travail dans le navigateur, sans ouvrir un JSON. Le propriétaire y gère les langues, les membres et, s'il le veut, les textes source. L'interface est en français en v1 : c'est l'outil du propriétaire et de ses traducteurs, pas l'application traduite.
+Le traducteur fait son travail dans le navigateur, sans ouvrir un JSON. Le propriétaire y gère les langues, les membres et, s'il le veut, les textes source. L'interface est en anglais par défaut. Depuis le profil, on peut passer en français ; ce choix est enregistré sur l'appareil. C'est l'outil du propriétaire et de ses traducteurs, pas l'application traduite.
 
 ## Pages
 

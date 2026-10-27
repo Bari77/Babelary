@@ -1,10 +1,12 @@
 import { registerLocaleData } from "@angular/common";
 import { provideHttpClient, withInterceptors } from "@angular/common/http";
+import localeEn from "@angular/common/locales/en";
 import localeFr from "@angular/common/locales/fr";
 import { ApplicationConfig, LOCALE_ID, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from "@angular/core";
 import { provideRouter } from "@angular/router";
 import { credentialsInterceptor } from "@core/http/credentials.interceptor";
 import { errorInterceptor } from "@core/http/error.interceptor";
+import { InterfaceLocale, readInterfaceLocale } from "@core/i18n/interface-locale";
 import { HealthService } from "@features/home/services/health.service";
 import { LocalesService } from "@features/locales/services/locales.service";
 import { LocalesStore } from "@features/locales/stores/locales.store";
@@ -20,7 +22,11 @@ import { provideTranslateLoader, provideTranslateService } from "@ngx-translate/
 import { TRANSLATE_HTTP_LOADER_CONFIG, TranslateHttpLoader } from "@ngx-translate/http-loader";
 import { routes } from "./app.routes";
 
-registerLocaleData(localeFr);
+registerLocaleData(localeFr, "fr-FR");
+registerLocaleData(localeEn, "en-US");
+
+const interfaceLocale = readInterfaceLocale();
+document.documentElement.lang = interfaceLocale;
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -28,7 +34,8 @@ export const appConfig: ApplicationConfig = {
         provideZoneChangeDetection({ eventCoalescing: true }),
         provideRouter(routes),
         provideHttpClient(withInterceptors([credentialsInterceptor, errorInterceptor])),
-        { provide: LOCALE_ID, useValue: "fr-FR" },
+        { provide: LOCALE_ID, useValue: interfaceLocale },
+        InterfaceLocale,
         SetupService,
         SessionService,
         ProfileService,
@@ -49,8 +56,8 @@ export const appConfig: ApplicationConfig = {
             },
         },
         provideTranslateService({
-            fallbackLang: "fr-FR",
-            lang: "fr-FR",
+            fallbackLang: "en-US",
+            lang: interfaceLocale,
             loader: provideTranslateLoader(TranslateHttpLoader),
         }),
     ],

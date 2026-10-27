@@ -62,7 +62,8 @@ function writeHelp(io) {
     const row = (command, text) => `  ${out.accent(cell(command, 28))}${out.muted(text)}\n`;
     io.stdout.write(`${out.strong("babelary")}  ${out.muted("syncs a repository with a Babelary instance")}\n\n`);
     io.stdout.write(`  ${out.muted("The token is read from BABELARY_TOKEN.")}\n`);
-    io.stdout.write(`  ${out.muted("It does not belong in babelary.yml.")}\n\n`);
+    io.stdout.write(`  ${out.muted("It does not belong in babelary.yml.")}\n`);
+    io.stdout.write(`  ${out.muted("layout: locale stores one <locale>.json in base_path.")}\n\n`);
     io.stdout.write(`${out.strong("Commands")}\n`);
     io.stdout.write(row("push sources", "uploads the source locale JSON files"));
     io.stdout.write(row("push translations", "uploads the target locale folders"));
@@ -124,11 +125,17 @@ function parseConfig(text, directory) {
         }
     }
 
+    const layout = values.layout ?? "folder";
+    if (layout !== "folder" && layout !== "locale") {
+        throw new Error("babelary.yml: layout must be folder or locale.");
+    }
+
     return {
         baseUrl: values.base_url.replace(/\/+$/, ""),
         project: values.project,
         sourceLocale: values.source_locale,
         basePath: path.resolve(directory, values.base_path),
+        localeLayout: layout === "locale",
     };
 }
 
@@ -138,30 +145,40 @@ async function pushSources(config, token, args, io) {
         return 1;
     }
 
-    const directory = path.join(config.basePath, config.sourceLocale);
-    const names = jsonFiles(directory);
-    if (names === null) {
-        fail(io, `Source folder not found: ${directory}`);
-        return 1;
-    }
-
-    if (names.length === 0) {
-        fail(io, "No source files.");
-        return 1;
-    }
-
     const files = [];
     let invalid = false;
-    for (const name of names) {
-        const content = fs.readFileSync(path.join(directory, name), "utf8");
-        const problem = documentProblem(content);
-        if (problem) {
-            invalid = true;
-            fail(io, `${name}: ${problem}, file not sent.`);
-            continue;
+    if (config.localeLayout) {
+        const loaded = readLocaleDocument(config.basePath, config.sourceLocale);
+        if (loaded.error) {
+            fail(io, loaded.error);
+            return 1;
         }
 
-        files.push({ name, content });
+        files.push({ name: `${config.sourceLocale}.json`, content: loaded.content });
+    } else {
+        const directory = path.join(config.basePath, config.sourceLocale);
+        const names = jsonFiles(directory);
+        if (names === null) {
+            fail(io, `Source folder not found: ${directory}`);
+            return 1;
+        }
+
+        if (names.length === 0) {
+            fail(io, "No source files.");
+            return 1;
+        }
+
+        for (const name of names) {
+            const content = fs.readFileSync(path.join(directory, name), "utf8");
+            const problem = documentProblem(content);
+            if (problem) {
+                invalid = true;
+                fail(io, `${name}: ${problem}, file not sent.`);
+                continue;
+            }
+
+            files.push({ name, content });
+        }
     }
 
     if (files.length === 0) {
@@ -236,7 +253,7 @@ async function pushTranslations(config, token, args, io) {
     );
     const targets = new Set(project.targets ?? []);
     const overwrite = args.includes("--overwrite-empty");
-    const folders = localeFolders(config.basePath);
+    const folders = config.localeLayout ? localeJsonNames(config.basePath) : localeFolders(config.basePath);
     if (folders === null) {
         fail(io, `Folder not found: ${config.basePath}`);
         return 1;
@@ -245,6 +262,7 @@ async function pushTranslations(config, token, args, io) {
     const out = style(io.stdout);
     heading(io, "Translations", config.project);
     let failed = false;
+    const serverFile = `${config.sourceLocale}.json`;
     for (const locale of folders) {
         if (locale === config.sourceLocale || locale === project.sourceLocale) {
             continue;
@@ -261,18 +279,22 @@ async function pushTranslations(config, token, args, io) {
             continue;
         }
 
-        const names = jsonFiles(path.join(config.basePath, locale)) ?? [];
+        const names = config.localeLayout ? [serverFile] : (jsonFiles(path.join(config.basePath, locale)) ?? []);
         const files = [];
         for (const fileName of names) {
-            const content = fs.readFileSync(path.join(config.basePath, locale, fileName), "utf8");
+            const relative = config.localeLayout ? `${locale}.json` : `${locale}/${fileName}`;
+            const content = fs.readFileSync(
+                config.localeLayout ? path.join(config.basePath, `${locale}.json`) : path.join(config.basePath, locale, fileName),
+                "utf8",
+            );
             const problem = documentProblem(content);
             if (problem) {
                 failed = true;
-                fail(io, `${locale}/${fileName}: ${problem}, file not sent.`);
+                fail(io, `${relative}: ${problem}, file not sent.`);
                 continue;
             }
 
-            files.push({ name: fileName, content });
+            files.push({ name: config.localeLayout ? serverFile : fileName, content });
         }
 
         if (files.length === 0) {
@@ -311,27 +333,36 @@ async function pull(config, token, io) {
     const locales = [project.sourceLocale, ...(project.targets ?? [])];
     const out = style(io.stdout);
     heading(io, "Pull", config.project);
+    let failed = false;
     for (const locale of locales) {
         const archive = await download(
             config,
             token,
             `/api/v1/Projects/exportLocale?project=${encodeURIComponent(config.project)}&locale=${encodeURIComponent(locale)}`,
         );
-        const directory = path.join(config.basePath, locale);
-        fs.mkdirSync(directory, { recursive: true });
-        const files = unzip(archive);
-        for (const file of files) {
-            if (file.name.includes("..") || file.name.includes("/") || file.name.includes("\\")) {
+        const files = unzip(archive).filter((file) => !file.name.includes("..") && !file.name.includes("/") && !file.name.includes("\\"));
+        if (config.localeLayout) {
+            if (files.length !== 1) {
+                failed = true;
+                fail(io, `${locale}: locale layout expects one JSON file, got ${files.length}.`);
                 continue;
             }
 
+            fs.writeFileSync(path.join(config.basePath, `${locale}.json`), files[0].content);
+            io.stdout.write(`  ${out.accent(cell(locale, 8))}${out.ok(`${locale}.json`)}\n`);
+            continue;
+        }
+
+        const directory = path.join(config.basePath, locale);
+        fs.mkdirSync(directory, { recursive: true });
+        for (const file of files) {
             fs.writeFileSync(path.join(directory, file.name), file.content);
         }
 
         io.stdout.write(`  ${out.accent(cell(locale, 8))}${out.ok(count(files.length, "file", "files"))}\n`);
     }
 
-    return 0;
+    return failed ? 1 : 0;
 }
 
 async function status(config, token, io) {
@@ -380,6 +411,33 @@ function jsonFiles(directory) {
     return fs.readdirSync(directory, { withFileTypes: true })
         .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
         .map((entry) => entry.name)
+        .sort((left, right) => left.localeCompare(right));
+}
+
+function readLocaleDocument(directory, locale) {
+    const name = `${locale}.json`;
+    const filePath = path.join(directory, name);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+        return { error: `Source file not found: ${filePath}` };
+    }
+
+    const content = fs.readFileSync(filePath, "utf8");
+    const problem = documentProblem(content);
+    if (problem) {
+        return { error: `${name}: ${problem}, file not sent.` };
+    }
+
+    return { content };
+}
+
+function localeJsonNames(directory) {
+    if (!fs.existsSync(directory)) {
+        return null;
+    }
+
+    return fs.readdirSync(directory, { withFileTypes: true })
+        .filter((entry) => entry.isFile() && entry.name.endsWith(".json") && LOCALE.test(entry.name.slice(0, -".json".length)))
+        .map((entry) => entry.name.slice(0, -".json".length))
         .sort((left, right) => left.localeCompare(right));
 }
 

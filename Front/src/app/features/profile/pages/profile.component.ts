@@ -7,7 +7,9 @@ import { MatChip, MatChipSet } from "@angular/material/chips";
 import { MatDialog } from "@angular/material/dialog";
 import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from "@angular/material/form-field";
 import { MatIcon } from "@angular/material/icon";
+import { MatOption } from "@angular/material/core";
 import { MatInput } from "@angular/material/input";
+import { MatSelect, MatSelectTrigger } from "@angular/material/select";
 import {
     MatList,
     MatListItem,
@@ -17,7 +19,9 @@ import {
 } from "@angular/material/list";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { InterfaceLocale, interfaceLocaleLabel, interfaceLocales } from "@core/i18n/interface-locale";
 import { SkeletonComponent } from "@core/skeleton.component";
+import { LocaleFlagComponent } from "@features/locales/components/locale-flag.component";
 import { CliToken } from "@features/profile/models/cli-token.model";
 import { RevokeTokenDialog } from "@features/profile/components/revoke-token.dialog";
 import { ProfileStore } from "@features/profile/stores/profile.store";
@@ -27,7 +31,7 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { firstValueFrom } from "rxjs";
 
 /**
- * Name, password, and CLI tokens.
+ * Language, name, password, and CLI tokens.
  */
 @Component({
     selector: "app-profile",
@@ -46,6 +50,9 @@ import { firstValueFrom } from "rxjs";
         MatHint,
         MatSuffix,
         MatInput,
+        MatSelect,
+        MatSelectTrigger,
+        MatOption,
         MatButton,
         MatIconButton,
         MatIcon,
@@ -58,6 +65,7 @@ import { firstValueFrom } from "rxjs";
         MatListItemLine,
         MatProgressSpinner,
         SkeletonComponent,
+        LocaleFlagComponent,
     ],
     templateUrl: "./profile.component.html",
     styleUrl: "./profile.component.scss",
@@ -65,6 +73,9 @@ import { firstValueFrom } from "rxjs";
 export class ProfileComponent implements OnDestroy {
     public readonly sessionStore = inject(SessionStore);
     public readonly profileStore = inject(ProfileStore);
+    public readonly interfaceLocale = inject(InterfaceLocale);
+    public readonly languages = interfaceLocales;
+    public readonly languageLabel = interfaceLocaleLabel;
     public readonly hidePassword = signal(true);
     public readonly nameForm = new FormGroup({
         name: new FormControl(this.sessionStore.account()?.name ?? "", {
@@ -100,6 +111,14 @@ export class ProfileComponent implements OnDestroy {
 
     public ngOnDestroy(): void {
         this.profileStore.dismissRevealed();
+    }
+
+    public async chooseLanguage(code: string): Promise<void> {
+        const previous = this.interfaceLocale.code();
+        await this.interfaceLocale.choose(code);
+        if (this.interfaceLocale.code() !== previous) {
+            this.notify("PROFILE.SAVED");
+        }
     }
 
     public async saveName(): Promise<void> {

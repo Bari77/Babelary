@@ -1,3 +1,7 @@
+## [v0.6.0] - 2026-10-27
+
+Le profil permet de choisir la langue du site, anglais ou français. Le choix est enregistré sur l'appareil. Sans choix, le site s'ouvre en anglais.
+
 ## [v0.5.0] - 2026-10-27
 
 Sur petit écran, les listes montrent le drapeau et le code de la langue, les barres restent à droite, et le fil d'Ariane ne garde que le drapeau. Les paramètres chargent les langues au défilement. L'éditeur ne demande plus de quitter quand rien n'a changé, et le pourcentage ne recouvre plus le nombre de clés.

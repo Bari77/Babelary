@@ -69,7 +69,7 @@
                     <div>
                         <div class="title">{{ invite.email }}</div>
                         <div class="hint">{{ names(invite.locales) }}</div>
-                        <div class="hint">{{ "PROJECT.INVITE_EXPIRES" | translate: { date: (invite.expiresAt | date: "d MMMM y") } }}</div>
+                        <div class="hint">{{ "PROJECT.INVITE_EXPIRES" | translate: { date: (invite.expiresAt | date: "d MMMM y" : undefined : interfaceLocale.code()) } }}</div>
                     </div>
                     <button mat-button type="button" (click)="revoke(invite.id)">{{ "PROJECT.INVITE_CANCEL" | translate }}</button>
                 </article>
