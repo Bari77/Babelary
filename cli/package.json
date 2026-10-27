@@ -1,0 +1,24 @@
+{
+    "name": "@bari77/babelary",
+    "version": "0.1.0",
+    "description": "Pushes and pulls translations for a Babelary instance.",
+    "bin": {
+        "babelary": "./bin/babelary.js"
+    },
+    "files": [
+        "bin",
+        "lib"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Bari77/Babelary.git",
+        "directory": "cli"
+    },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com",
+        "access": "public"
+    },
+    "engines": {
+        "node": ">=20"
+    }
+}

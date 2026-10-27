@@ -458,9 +458,11 @@ public class ProjectsImplTests : IDisposable
             this.projects.ExportLocaleAsync(this.memberId, "kert-front", "de-DE", CancellationToken.None));
         Assert.Equal("ERR_PROJECT_FORBIDDEN", otherLocale.Message);
 
-        var source = await Assert.ThrowsAsync<ForbiddenException>(() =>
-            this.projects.ExportLocaleAsync(this.ownerId, "kert-front", "en-US", CancellationToken.None));
-        Assert.Equal("ERR_PROJECT_FORBIDDEN", source.Message);
+        var source = await this.projects.ExportLocaleAsync(this.ownerId, "kert-front", "en-US", CancellationToken.None);
+        Assert.Equal("en-US.zip", source.FileName);
+        using var sourceArchive = new ZipArchive(new MemoryStream(source.Content), ZipArchiveMode.Read);
+        using var sourceAccount = JsonDocument.Parse(ReadZip(sourceArchive, "account.json"));
+        Assert.Equal("User", sourceAccount.RootElement.GetProperty("ACCOUNT").GetProperty("LOGIN").GetString());
 
         var stranger = await Assert.ThrowsAsync<NotFoundException>(() =>
             this.projects.ExportLocaleAsync(Guid.NewGuid(), "kert-front", "fr-FR", CancellationToken.None));
@@ -574,14 +576,26 @@ public class ProjectsImplTests : IDisposable
         var invite = await this.projects.InviteAsync(this.ownerId, "kert-front", "trad@example.com", ["fr-FR"], CancellationToken.None);
         await this.projects.AcceptInviteAsync(invite.Code, this.memberId, null, null, CancellationToken.None);
 
-        var forbidden = await Assert.ThrowsAsync<ForbiddenException>(() =>
+        var proposed = await this.projects.ImportTranslationsAsync(
+            this.memberId,
+            "kert-front",
+            "fr-FR",
+            [new SourceFileUpload { Name = "account.json", Content = """{ "ACCOUNT": { "TITLE": "Proposition membre" } }""" }],
+            CancellationToken.None);
+        Assert.Equal(1, proposed.Files[0].Updated);
+        Assert.Equal(
+            "Proposition membre",
+            (await this.db.ProjectProposals.SingleAsync(proposal => proposal.Locale == "fr-FR" && proposal.Key.Path == "ACCOUNT.TITLE")).Text);
+        Assert.Equal("", (await this.db.ProjectValues.SingleAsync(value => value.Locale == "fr-FR" && value.Key.Path == "ACCOUNT.TITLE")).Text);
+
+        var otherLocale = await Assert.ThrowsAsync<ForbiddenException>(() =>
             this.projects.ImportTranslationsAsync(
                 this.memberId,
                 "kert-front",
-                "fr-FR",
+                "de-DE",
                 [new SourceFileUpload { Name = "account.json", Content = "{}" }],
                 CancellationToken.None));
-        Assert.Equal("ERR_PROJECT_FORBIDDEN", forbidden.Message);
+        Assert.Equal("ERR_PROJECT_FORBIDDEN", otherLocale.Message);
 
         var source = await Assert.ThrowsAsync<ForbiddenException>(() =>
             this.projects.ImportTranslationsAsync(
@@ -707,6 +721,108 @@ public class ProjectsImplTests : IDisposable
         Assert.Empty(approved.Pending);
         Assert.Equal("Titel", (await this.db.ProjectValues.SingleAsync(value => value.Locale == "de-DE")).Text);
         Assert.Equal("Accueil", (await this.db.ProjectValues.SingleAsync(value => value.Locale == "fr-FR")).Text);
+    }
+
+    [Fact]
+    public async Task Push_keeps_a_missing_file_until_delete_is_asked()
+    {
+        await this.projects.CreateAsync(this.ownerId, "kert-front", "Kert", "en-US", CancellationToken.None);
+        await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [
+                new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Home" } }""" },
+                new SourceFileUpload { Name = "pet.json", Content = """{ "PET": { "NAME": "Dog" } }""" },
+            ],
+            CancellationToken.None);
+
+        var kept = await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Home" } }""" }],
+            CancellationToken.None);
+        Assert.Equal(0, kept.DeletedFiles);
+        Assert.Equal(2, await this.db.ProjectFiles.CountAsync());
+
+        var removed = await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Home" } }""" }],
+            CancellationToken.None,
+            deleteMissingFiles: true);
+        Assert.Equal(1, removed.DeletedFiles);
+        Assert.Equal("home.json", Assert.Single(await this.db.ProjectFiles.Select(file => file.Name).ToListAsync()));
+    }
+
+    [Fact]
+    public async Task Empty_translation_stays_until_overwrite_is_asked()
+    {
+        await this.projects.CreateAsync(this.ownerId, "kert-front", "Kert", "en-US", CancellationToken.None);
+        await this.projects.AddTargetsAsync(this.ownerId, "kert-front", ["fr-FR"], CancellationToken.None);
+        await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Home" } }""" }],
+            CancellationToken.None);
+        await this.projects.ImportTranslationsAsync(
+            this.ownerId,
+            "kert-front",
+            "fr-FR",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Accueil" } }""" }],
+            CancellationToken.None);
+
+        var skipped = await this.projects.ImportTranslationsAsync(
+            this.ownerId,
+            "kert-front",
+            "fr-FR",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "" } }""" }],
+            CancellationToken.None);
+        Assert.Equal(1, skipped.Files[0].Skipped);
+        Assert.Equal("Accueil", (await this.db.ProjectValues.SingleAsync(value => value.Locale == "fr-FR")).Text);
+
+        var cleared = await this.projects.ImportTranslationsAsync(
+            this.ownerId,
+            "kert-front",
+            "fr-FR",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "" } }""" }],
+            CancellationToken.None,
+            overwriteEmpty: true);
+        Assert.Equal(1, cleared.Files[0].Updated);
+        Assert.Equal("", (await this.db.ProjectValues.SingleAsync(value => value.Locale == "fr-FR")).Text);
+    }
+
+    [Fact]
+    public async Task Status_lists_empty_keys_and_counts_review()
+    {
+        await this.projects.CreateAsync(this.ownerId, "kert-front", "Kert", "en-US", CancellationToken.None);
+        await this.projects.AddTargetsAsync(this.ownerId, "kert-front", ["fr-FR"], CancellationToken.None);
+        await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "kert-front",
+            [new SourceFileUpload
+            {
+                Name = "home.json",
+                Content = """{ "HOME": { "TITLE": "Home", "NOTE": "Note" } }""",
+            }],
+            CancellationToken.None);
+        await this.projects.ImportTranslationsAsync(
+            this.ownerId,
+            "kert-front",
+            "fr-FR",
+            [new SourceFileUpload { Name = "home.json", Content = """{ "HOME": { "TITLE": "Accueil" } }""" }],
+            CancellationToken.None);
+        var title = await this.db.ProjectValues.SingleAsync(value => value.Key.Path == "HOME.TITLE");
+        title.SourceSnapshot = "Previous";
+        await this.db.SaveChangesAsync();
+
+        var status = await this.projects.StatusAsync(this.ownerId, "kert-front", CancellationToken.None);
+        var french = Assert.Single(status.Locales);
+        Assert.Equal(2, french.Total);
+        Assert.Equal(0, french.Translated);
+        Assert.Equal(1, french.Review);
+        var empty = Assert.Single(french.Empty);
+        Assert.Equal("home.json", empty.File);
+        Assert.Equal("HOME.NOTE", empty.Path);
     }
 
     public void Dispose()

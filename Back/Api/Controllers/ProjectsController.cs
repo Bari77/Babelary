@@ -71,17 +71,38 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
 
     /// <summary>Imports source JSON files for the project owner.</summary>
     [HttpPost("importSources")]
-    public Task<ImportSourcesDto> ImportSources(string? project, ImportSourcesRequest request, CancellationToken token)
-        => projects.ImportSourcesAsync(AccountSignIn.RequireAccountId(User), project, request.Files, token);
+    public Task<ImportSourcesDto> ImportSources(
+        string? project,
+        bool deleteMissingFiles,
+        ImportSourcesRequest request,
+        CancellationToken token)
+        => projects.ImportSourcesAsync(
+            AccountSignIn.RequireAccountId(User),
+            project,
+            request.Files,
+            token,
+            deleteMissingFiles);
 
-    /// <summary>Imports translation JSON files for one target locale. Reserved to the owner.</summary>
+    /// <summary>Imports translation JSON files for one target locale. A member is limited to assigned locales.</summary>
     [HttpPost("importTranslations")]
     public Task<ImportTranslationsDto> ImportTranslations(
         string? project,
         string? locale,
+        bool overwriteEmpty,
         ImportSourcesRequest request,
         CancellationToken token)
-        => projects.ImportTranslationsAsync(AccountSignIn.RequireAccountId(User), project, locale, request.Files, token);
+        => projects.ImportTranslationsAsync(
+            AccountSignIn.RequireAccountId(User),
+            project,
+            locale,
+            request.Files,
+            token,
+            overwriteEmpty);
+
+    /// <summary>Translation progress for the CLI. Lists the keys that are still empty.</summary>
+    [HttpGet("status")]
+    public Task<SyncStatusDto> Status(string? project, CancellationToken token)
+        => projects.StatusAsync(AccountSignIn.RequireAccountId(User), project, token);
 
     /// <summary>Downloads one target locale as a zip named by its code.</summary>
     [HttpGet("exportLocale")]

@@ -60,6 +60,9 @@ public class ImportSourcesDto
 
     /// <summary>Project after the files that could be read were stored.</summary>
     public ProjectDto Project { get; set; } = new();
+
+    /// <summary>Source files removed because they were absent from this import.</summary>
+    public int DeletedFiles { get; set; }
 }
 
 /// <summary>One key the translation import refused. The other keys of the file are still applied.</summary>
@@ -130,4 +133,40 @@ public class LocaleProgressDto
 
     /// <summary>Waiting proposals whose key has no saved text in this locale.</summary>
     public int PendingOpen { get; set; }
+}
+
+/// <summary>CLI status of the target locales visible to the account.</summary>
+public class SyncStatusDto
+{
+    /// <summary>One row per visible target locale, ordered by code.</summary>
+    public SyncLocaleDto[] Locales { get; set; } = [];
+}
+
+/// <summary>Translation counts for one target locale.</summary>
+public class SyncLocaleDto
+{
+    /// <summary>Locale code.</summary>
+    public string Locale { get; set; } = "";
+
+    /// <summary>Keys of the project.</summary>
+    public int Total { get; set; }
+
+    /// <summary>Saved values that are translated or identical to the source.</summary>
+    public int Translated { get; set; }
+
+    /// <summary>Saved values whose source has changed since they were written.</summary>
+    public int Review { get; set; }
+
+    /// <summary>Keys that still have an empty saved value, in source order.</summary>
+    public SyncEmptyKeyDto[] Empty { get; set; } = [];
+}
+
+/// <summary>A key that still has no saved translation.</summary>
+public class SyncEmptyKeyDto
+{
+    /// <summary>Source file name.</summary>
+    public string File { get; set; } = "";
+
+    /// <summary>Dotted path.</summary>
+    public string Path { get; set; } = "";
 }

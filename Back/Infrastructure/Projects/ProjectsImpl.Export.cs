@@ -11,7 +11,11 @@ public partial class ProjectsImpl
     public async Task<LocaleExport> ExportLocaleAsync(Guid accountId, string? project, string? locale, CancellationToken token)
     {
         var stored = await RequireVisibleAsync(accountId, project, token);
-        var code = await RequireVisibleLocaleAsync(stored, accountId, locale, token);
+        var requested = locale?.Trim() ?? "";
+        var sourceExport = string.Equals(requested, stored.SourceLocale, StringComparison.Ordinal);
+        var code = sourceExport
+            ? stored.SourceLocale
+            : await RequireVisibleLocaleAsync(stored, accountId, locale, token);
         var files = await db.ProjectFiles
             .AsNoTracking()
             .Where(file => file.ProjectId == stored.Id)
@@ -22,14 +26,14 @@ public partial class ProjectsImpl
             .AsNoTracking()
             .Where(key => key.File.ProjectId == stored.Id)
             .OrderBy(key => key.Ordinal)
-            .Select(key => new { key.Id, key.FileId, key.Path })
+            .Select(key => new { key.Id, key.FileId, key.Path, key.SourceValue })
             .ToListAsync(token);
-        var values = await db.ProjectValues
-            .AsNoTracking()
-            .Where(value => value.Locale == code && value.Key.File.ProjectId == stored.Id)
-            .Select(value => new { value.KeyId, value.Text })
-            .ToListAsync(token);
-        var textByKey = values.ToDictionary(value => value.KeyId, value => value.Text);
+        var textByKey = sourceExport
+            ? keys.ToDictionary(key => key.Id, key => key.SourceValue)
+            : await db.ProjectValues
+                .AsNoTracking()
+                .Where(value => value.Locale == code && value.Key.File.ProjectId == stored.Id)
+                .ToDictionaryAsync(value => value.KeyId, value => value.Text, token);
 
         using var stream = new MemoryStream();
         using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))

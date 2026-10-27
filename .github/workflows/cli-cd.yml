@@ -1,0 +1,61 @@
+name: CD - CLI (GitHub Packages)
+
+on:
+    push:
+        branches:
+            - develop
+            - main
+        paths:
+            - "cli/**"
+            - ".github/workflows/cli-cd.yml"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    packages: write
+
+jobs:
+    publish:
+        name: Publish
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: cli
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  registry-url: https://npm.pkg.github.com
+                  scope: "@bari77"
+
+            - name: Check syntax
+              run: |
+                  node --check bin/babelary.js
+                  node --check lib/cli.js
+                  node --check lib/zip.js
+                  node --check lib/style.js
+
+            - name: Publish
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  NAME=$(node -p "require('./package.json').name")
+                  if [ "$GITHUB_REF" = "refs/heads/develop" ]; then
+                      TAG=develop
+                  else
+                      TAG=latest
+                  fi
+                  if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+                      npm dist-tag add "${NAME}@${VERSION}" "$TAG"
+                      echo "Version ${VERSION} is already published. Tag ${TAG} updated."
+                  else
+                      npm publish --access public --tag "$TAG"
+                      echo "Published ${NAME}@${VERSION} (${TAG})."
+                  fi
+                  echo "### Package" >> "$GITHUB_STEP_SUMMARY"
+                  echo "- ${NAME}@${VERSION} (${TAG})" >> "$GITHUB_STEP_SUMMARY"

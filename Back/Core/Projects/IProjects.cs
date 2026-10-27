@@ -34,25 +34,42 @@ public interface IProjects
     /// <summary>Lists the source files of a project the account owns.</summary>
     Task<IReadOnlyList<ProjectFileDto>> ListFilesAsync(Guid accountId, string? project, CancellationToken token);
 
-    /// <summary>Imports source JSON files. A file that cannot be read is reported and left unchanged.</summary>
-    Task<ImportSourcesDto> ImportSourcesAsync(Guid accountId, string? project, IReadOnlyList<SourceFileUpload>? files, CancellationToken token);
+    /// <summary>
+    /// Imports source JSON files. A file that cannot be read is reported and left unchanged.
+    /// When <paramref name="deleteMissingFiles"/> is set, source files absent from this import are removed.
+    /// </summary>
+    Task<ImportSourcesDto> ImportSourcesAsync(
+        Guid accountId,
+        string? project,
+        IReadOnlyList<SourceFileUpload>? files,
+        CancellationToken token,
+        bool deleteMissingFiles = false);
 
     /// <summary>
-    /// Writes saved translations from JSON files that match the source file names.
-    /// An empty leaf does not erase a saved value. An unknown key is ignored.
+    /// Writes translations from JSON files that match the source file names.
+    /// The owner stores the saved value. A member stores a proposal for an assigned locale.
+    /// An empty leaf does not erase a saved value unless <paramref name="overwriteEmpty"/> is set.
+    /// An unknown key is ignored.
     /// </summary>
     Task<ImportTranslationsDto> ImportTranslationsAsync(
         Guid accountId,
         string? project,
         string? locale,
         IReadOnlyList<SourceFileUpload>? files,
-        CancellationToken token);
+        CancellationToken token,
+        bool overwriteEmpty = false);
 
     /// <summary>
-    /// Builds a zip of one target locale. Entries keep the source file names and key shape.
-    /// Saved translations replace the leaves. An empty translation stays an empty string.
+    /// Builds a zip of one locale. The source locale exports the source texts.
+    /// A target locale keeps the source file names and key shape, with saved translations in the leaves.
+    /// An empty translation stays an empty string.
     /// </summary>
     Task<LocaleExport> ExportLocaleAsync(Guid accountId, string? project, string? locale, CancellationToken token);
+
+    /// <summary>
+    /// Per target locale: translated values, values to review, and the keys that are still empty.
+    /// </summary>
+    Task<SyncStatusDto> StatusAsync(Guid accountId, string? project, CancellationToken token);
 
     /// <summary>Progress of each source file for one target locale the account may see.</summary>
     Task<IReadOnlyList<FileProgressDto>> ListFileProgressAsync(Guid accountId, string? project, string? locale, CancellationToken token);

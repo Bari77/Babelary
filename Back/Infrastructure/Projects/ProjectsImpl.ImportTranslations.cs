@@ -12,21 +12,23 @@ public partial class ProjectsImpl
         string? project,
         string? locale,
         IReadOnlyList<SourceFileUpload>? files,
-        CancellationToken token)
+        CancellationToken token,
+        bool overwriteEmpty = false)
     {
-        var stored = await RequireOwnedAsync(accountId, project, token);
+        var stored = await RequireVisibleAsync(accountId, project, token);
         var code = await RequireVisibleLocaleAsync(stored, accountId, locale, token);
         if (files is null || files.Count == 0)
         {
             throw new BadRequestException("ERR_FILE_REQUIRED");
         }
 
+        var owner = stored.OwnerAccountId == accountId;
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var results = new List<ImportTranslationFileDto>(files.Count);
         var updated = 0;
         foreach (var file in files)
         {
-            var result = await ImportTranslationFileAsync(stored.Id, code, file, seen, token);
+            var result = await ImportTranslationFileAsync(stored.Id, code, file, seen, owner, accountId, overwriteEmpty, token);
             updated += result.Updated;
             results.Add(result);
         }
@@ -49,6 +51,9 @@ public partial class ProjectsImpl
         string locale,
         SourceFileUpload? file,
         HashSet<string> seen,
+        bool owner,
+        Guid accountId,
+        bool overwriteEmpty,
         CancellationToken token)
     {
         var name = file?.Name?.Trim() ?? "";
@@ -102,33 +107,45 @@ public partial class ProjectsImpl
 
             present.Add(path);
 
-            if (text.Length == 0)
+            if (text.Length == 0 && !overwriteEmpty)
             {
                 skipped++;
                 continue;
             }
 
-            try
+            if (text.Length > 0)
             {
-                Placeholders.RequireSame(key.SourceValue, text);
-            }
-            catch (BadRequestException exception)
-            {
-                issues.Add(new ImportKeyIssueDto { Path = path, Error = exception.Message, Detail = exception.Detail });
-                continue;
+                try
+                {
+                    Placeholders.RequireSame(key.SourceValue, text);
+                }
+                catch (BadRequestException exception)
+                {
+                    issues.Add(new ImportKeyIssueDto { Path = path, Error = exception.Message, Detail = exception.Detail });
+                    continue;
+                }
             }
 
-            var value = key.Values.FirstOrDefault(item => item.Locale == locale);
-            if (value is not null && string.Equals(value.Text, text, StringComparison.Ordinal))
+            if (owner)
+            {
+                var value = key.Values.FirstOrDefault(item => item.Locale == locale);
+                var same = value is not null && string.Equals(value.Text, text, StringComparison.Ordinal);
+                if (same && !proposalByKey.ContainsKey(key.Id))
+                {
+                    unchanged++;
+                    continue;
+                }
+
+                ApplyValue(key, locale, text);
+                if (proposalByKey.Remove(key.Id, out var proposal))
+                {
+                    db.ProjectProposals.Remove(proposal);
+                }
+            }
+            else if (!Propose(key.Id, locale, accountId, text, proposalByKey))
             {
                 unchanged++;
                 continue;
-            }
-
-            ApplyValue(key, locale, text);
-            if (proposalByKey.Remove(key.Id, out var proposal))
-            {
-                db.ProjectProposals.Remove(proposal);
             }
 
             updated++;
@@ -144,5 +161,38 @@ public partial class ProjectsImpl
             Missing = byPath.Keys.Count(path => !present.Contains(path)),
             Issues = issues.ToArray(),
         };
+    }
+
+    /// <summary>Stores a member proposal. Returns false when the pending text is already the same.</summary>
+    private bool Propose(
+        Guid keyId,
+        string locale,
+        Guid accountId,
+        string text,
+        Dictionary<Guid, ProjectProposal> proposalByKey)
+    {
+        if (!proposalByKey.TryGetValue(keyId, out var proposal))
+        {
+            proposal = new ProjectProposal
+            {
+                KeyId = keyId,
+                Locale = locale,
+                AuthorAccountId = accountId,
+            };
+            db.ProjectProposals.Add(proposal);
+            proposalByKey[keyId] = proposal;
+        }
+        else if (string.Equals(proposal.Text, text, StringComparison.Ordinal)
+            && proposal.Status == ProjectProposal.Pending
+            && proposal.AuthorAccountId == accountId)
+        {
+            return false;
+        }
+
+        proposal.Text = text;
+        proposal.Status = ProjectProposal.Pending;
+        proposal.AuthorAccountId = accountId;
+        proposal.UpdatedAt = DateTime.UtcNow;
+        return true;
     }
 }
