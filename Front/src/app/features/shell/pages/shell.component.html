@@ -92,10 +92,16 @@
             <nav class="crumbs" [attr.aria-label]="'GLOBAL.BREADCRUMB' | translate">
                 @for (crumb of crumbs(); track crumb.path; let last = $last) {
                     @if (!last) {
-                        <a [routerLink]="crumb.path"><app-locale-flag [code]="crumb.locale ?? ''" />{{ crumb.text ?? (crumb.key | translate) }}</a>
+                        <a [routerLink]="crumb.path" [class.crumb-locale]="!!crumb.locale">
+                            <app-locale-flag [code]="crumb.locale ?? ''" />
+                            <span class="crumb-text">{{ crumb.text ?? (crumb.key | translate) }}</span>
+                        </a>
                         <mat-icon class="crumb-sep" aria-hidden="true">chevron_right</mat-icon>
                     } @else {
-                        <span class="crumb-current" aria-current="page"><app-locale-flag [code]="crumb.locale ?? ''" />{{ crumb.text ?? (crumb.key | translate) }}</span>
+                        <span class="crumb-current" aria-current="page" [class.crumb-locale]="!!crumb.locale">
+                            <app-locale-flag [code]="crumb.locale ?? ''" />
+                            <span class="crumb-text">{{ crumb.text ?? (crumb.key | translate) }}</span>
+                        </span>
                     }
                 }
             </nav>

@@ -44,6 +44,10 @@ export class TargetLanguagesComponent {
     public readonly projectsStore = inject(ProjectsStore);
     public readonly localesStore = inject(LocalesStore);
     public readonly query = signal("");
+    public readonly availableLimit = signal(localePage);
+    public readonly chosenLimit = signal(localePage);
+    public readonly visibleAvailable = computed(() => this.lists().available.slice(0, this.availableLimit()));
+    public readonly visibleChosen = computed(() => this.lists().chosen.slice(0, this.chosenLimit()));
     public readonly availableSelected = signal(0);
     public readonly projectSelected = signal(0);
     public readonly handset = toSignal(
@@ -75,10 +79,27 @@ export class TargetLanguagesComponent {
 
     public onQuery(value: string): void {
         this.query.set(value);
+        this.availableLimit.set(localePage);
+        this.chosenLimit.set(localePage);
         this.availableList()?.deselectAll();
         this.projectList()?.deselectAll();
         this.availableSelected.set(0);
         this.projectSelected.set(0);
+    }
+
+    public onBoardScroll(event: Event, side: "available" | "chosen"): void {
+        const panel = event.currentTarget;
+        if (!(panel instanceof HTMLElement)) {
+            return;
+        }
+
+        const total = side === "available" ? this.lists().available.length : this.lists().chosen.length;
+        const limit = side === "available" ? this.availableLimit : this.chosenLimit;
+        if (limit() >= total || panel.scrollTop + panel.clientHeight < panel.scrollHeight - 80) {
+            return;
+        }
+
+        limit.update((count) => Math.min(total, count + localePage));
     }
 
     public onAvailableSelection(list: MatSelectionList): void {
@@ -145,6 +166,8 @@ export class TargetLanguagesComponent {
         return visible.filter((locale) => selected.has(locale.code));
     }
 }
+
+const localePage = 40;
 
 function localeMatches(label: string, query: string): boolean {
     const words = fold(query)

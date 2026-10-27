@@ -2,6 +2,8 @@ import { Component, DestroyRef, computed, effect, inject, signal, viewChild } fr
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
 import { MatButton } from "@angular/material/button";
+import { MatIcon } from "@angular/material/icon";
+import { MatTooltip } from "@angular/material/tooltip";
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from "@angular/material/card";
 import { MatDialog } from "@angular/material/dialog";
 import { MatOption } from "@angular/material/core";
@@ -44,6 +46,8 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
         MatSelectTrigger,
         MatOption,
         MatButton,
+        MatIcon,
+        MatTooltip,
         MatProgressSpinner,
         TargetLanguagesComponent,
         LocaleFlagComponent,
@@ -58,6 +62,8 @@ export class ProjectSettingsComponent {
     public readonly owner = computed(() => this.sessionStore.account()?.isInstanceOwner === true);
     public readonly creating = signal(true);
     public readonly localeQuery = signal("");
+    public readonly localePanelOpen = signal(false);
+    public readonly sourceLimit = signal(localePage);
     public readonly form = new FormGroup({
         slug: new FormControl("", {
             nonNullable: true,
@@ -82,6 +88,7 @@ export class ProjectSettingsComponent {
     private readonly translate = inject(TranslateService);
     public readonly routeSlug = signal<string | null>(null);
     private appliedSlug: string | null = null;
+    private detachSourceScroll: (() => void) | null = null;
 
     public constructor() {
         void this.localesStore.load().then(() => this.form.controls.sourceLocale.updateValueAndValidity());
@@ -152,20 +159,56 @@ export class ProjectSettingsComponent {
         });
     }
 
+    public visibleSourceLocales() {
+        const shown = this.filteredLocales().slice(0, this.sourceLimit());
+        const selected = this.form.controls.sourceLocale.value;
+        if (!selected || shown.some((locale) => locale.code === selected)) {
+            return shown;
+        }
+
+        const current = this.localesStore.locales().find((locale) => locale.code === selected);
+        return current ? [current, ...shown] : shown;
+    }
+
     public onLocalePanel(open: boolean, search: HTMLInputElement): void {
-        if (open) {
-            setTimeout(() => search.focus());
+        this.detachSourceScroll?.();
+        this.detachSourceScroll = null;
+        this.localePanelOpen.set(open);
+        this.sourceLimit.set(localePage);
+        if (!open) {
+            this.localeQuery.set("");
+            search.value = "";
             return;
         }
 
-        this.localeQuery.set("");
-        search.value = "";
+        setTimeout(() => {
+            if (!this.localePanelOpen()) {
+                return;
+            }
+
+            search.focus();
+            const panel = this.localeSelect()?.panel?.nativeElement;
+            if (!panel) {
+                return;
+            }
+
+            const onScroll = () => this.growSourceLocales(panel);
+            panel.addEventListener("scroll", onScroll, { passive: true });
+            this.detachSourceScroll = () => panel.removeEventListener("scroll", onScroll);
+        });
     }
 
     public onSearch(event: Event): void {
         const input = event.target;
-        if (input instanceof HTMLInputElement) {
-            this.localeQuery.set(input.value);
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+
+        this.localeQuery.set(input.value);
+        this.sourceLimit.set(localePage);
+        const panel = this.localeSelect()?.panel?.nativeElement;
+        if (panel) {
+            panel.scrollTop = 0;
         }
     }
 
@@ -240,6 +283,15 @@ export class ProjectSettingsComponent {
         }
     }
 
+    private growSourceLocales(panel: HTMLElement): void {
+        const total = this.filteredLocales().length;
+        if (this.sourceLimit() >= total || panel.scrollTop + panel.clientHeight < panel.scrollHeight - 80) {
+            return;
+        }
+
+        this.sourceLimit.update((count) => Math.min(total, count + localePage));
+    }
+
     private saved(): void {
         this.snackBar.open(this.translate.instant("PROJECT.SAVED"), undefined, { duration: 2500 });
     }
@@ -253,6 +305,8 @@ export class ProjectSettingsComponent {
         return this.localesStore.has(value) ? null : { locale: true };
     }
 }
+
+const localePage = 40;
 
 function fold(value: string): string {
     return value

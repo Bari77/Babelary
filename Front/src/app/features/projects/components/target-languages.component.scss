@@ -50,6 +50,7 @@
 
 mat-selection-list {
     overflow: auto;
+    overflow-anchor: none;
     max-height: 360px;
     padding-top: 4px;
     background: transparent;

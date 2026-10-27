@@ -41,6 +41,13 @@ body {
     --status-proposal-bg: color-mix(in srgb, var(--mat-sys-primary) 22%, transparent);
     --status-bad: var(--mat-sys-error);
     --status-bad-bg: color-mix(in srgb, var(--mat-sys-error) 20%, transparent);
+    --meter-width: 8rem;
+}
+
+@media (max-width: 600px) {
+    :root {
+        --meter-width: 5.5rem;
+    }
 }
 
 .material-icons {
@@ -96,6 +103,7 @@ mat-form-field {
 
 div.mat-mdc-select-panel.locale-panel {
     padding: 0;
+    overflow-anchor: none;
 }
 
 .locale-panel .mat-mdc-option:not(.locale-search-option) {

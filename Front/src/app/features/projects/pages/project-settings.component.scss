@@ -12,12 +12,55 @@ form {
     gap: 4px;
 }
 
+:host ::ng-deep mat-form-field .mat-mdc-form-field-subscript-wrapper {
+    height: auto;
+}
+
+:host ::ng-deep mat-form-field .mat-mdc-form-field-subscript-wrapper::before {
+    content: none;
+}
+
+:host ::ng-deep mat-form-field .mat-mdc-form-field-hint-wrapper,
+:host ::ng-deep mat-form-field .mat-mdc-form-field-error-wrapper {
+    position: static;
+}
+
+:host ::ng-deep mat-form-field .mat-mdc-form-field-hint {
+    white-space: normal;
+}
+
 .actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
-    margin-top: 8px;
+    margin-top: 12px;
+}
+
+.actions mat-icon,
+.actions mat-spinner {
+    margin-inline-end: 8px;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+@media (max-width: 600px) {
+    .action-label {
+        display: none;
+    }
+
+    :host ::ng-deep .actions .mat-mdc-unelevated-button.mat-mdc-button-base {
+        justify-content: center;
+        width: 40px;
+        min-width: 40px;
+        padding: 0;
+    }
+
+    :host ::ng-deep .actions .mat-mdc-unelevated-button .mat-icon,
+    :host ::ng-deep .actions .mat-mdc-unelevated-button .mat-mdc-progress-spinner {
+        margin: 0;
+    }
 }
 
 .empty {

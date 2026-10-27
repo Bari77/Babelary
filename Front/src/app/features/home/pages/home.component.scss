@@ -21,9 +21,80 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 9rem;
 }
 
-.progress-cell app-translation-meter {
-    flex: 1;
+.source {
+    white-space: nowrap;
+}
+
+.source-code {
+    display: none;
+}
+
+.key-count {
+    color: var(--mat-sys-on-surface-variant);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (max-width: 840px) {
+    .source-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .source-code {
+        display: inline;
+    }
+
+    .key-count {
+        display: none;
+    }
+
+    .mat-column-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 600px) {
+    .projects {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .projects .mat-mdc-header-cell,
+    .projects .mat-mdc-cell {
+        padding: 8px 4px;
+    }
+
+    .projects .mat-mdc-header-cell {
+        line-height: 1.2;
+        vertical-align: bottom;
+        white-space: normal;
+    }
+
+    .projects .mat-mdc-cell {
+        overflow: hidden;
+    }
+
+    .mat-column-name {
+        width: 18%;
+    }
+
+    .mat-column-sourceLocale {
+        width: 20%;
+    }
+
+    .mat-column-targetCount {
+        width: 18%;
+    }
+
+    .mat-column-progress {
+        width: 44%;
+    }
 }

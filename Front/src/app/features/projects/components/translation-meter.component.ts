@@ -33,7 +33,7 @@ import { TranslateModule } from "@ngx-translate/core";
     styles: `
         :host {
             display: block;
-            min-width: 7.5rem;
+            width: max-content;
         }
 
         .meter-row {
@@ -44,7 +44,8 @@ import { TranslateModule } from "@ngx-translate/core";
 
         .meter {
             position: relative;
-            flex: 1;
+            flex: 0 0 var(--meter-width, 8rem);
+            width: var(--meter-width, 8rem);
             height: 6px;
             border-radius: 999px;
             background: color-mix(in srgb, var(--mat-sys-on-surface) 12%, transparent);

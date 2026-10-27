@@ -51,11 +51,16 @@
                                 (mousedown)="$event.stopPropagation()"
                             />
                         </mat-option>
-                        @for (locale of filteredLocales(); track locale.code) {
-                            <mat-option [value]="locale.code"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-option>
+                        @if (!localePanelOpen() && form.controls.sourceLocale.value) {
+                            <mat-option [value]="form.controls.sourceLocale.value">{{ localesStore.label(form.controls.sourceLocale.value) }}</mat-option>
                         }
-                        @if (filteredLocales().length === 0) {
-                            <mat-option disabled>{{ "PROJECT.SOURCE_EMPTY" | translate }}</mat-option>
+                        @if (localePanelOpen()) {
+                            @for (locale of visibleSourceLocales(); track locale.code) {
+                                <mat-option [value]="locale.code"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-option>
+                            }
+                            @if (filteredLocales().length === 0) {
+                                <mat-option disabled>{{ "PROJECT.SOURCE_EMPTY" | translate }}</mat-option>
+                            }
                         }
                     </mat-select>
                     @if (form.controls.sourceLocale.disabled) {
@@ -71,19 +76,44 @@
                     <p class="form-error">{{ projectsStore.error() }}</p>
                 }
                 <div class="actions">
-                    <button mat-flat-button type="submit" [disabled]="projectsStore.pending()">
+                    <button
+                        mat-flat-button
+                        type="submit"
+                        [disabled]="projectsStore.pending()"
+                        [matTooltip]="'GLOBAL.SAVE' | translate"
+                        [attr.aria-label]="'GLOBAL.SAVE' | translate"
+                    >
                         @if (projectsStore.pending()) {
                             <mat-spinner diameter="18" />
                         } @else {
-                            {{ "GLOBAL.SAVE" | translate }}
+                            <mat-icon>save</mat-icon>
                         }
+                        <span class="action-label">{{ "GLOBAL.SAVE" | translate }}</span>
                     </button>
                     @if (!creating()) {
-                        <button mat-flat-button type="button" class="danger" [disabled]="projectsStore.pending()" (click)="reset()">
-                            {{ "PROJECT.RESET" | translate }}
+                        <button
+                            mat-flat-button
+                            type="button"
+                            class="danger"
+                            [disabled]="projectsStore.pending()"
+                            [matTooltip]="'PROJECT.RESET' | translate"
+                            [attr.aria-label]="'PROJECT.RESET' | translate"
+                            (click)="reset()"
+                        >
+                            <mat-icon>restart_alt</mat-icon>
+                            <span class="action-label">{{ "PROJECT.RESET" | translate }}</span>
                         </button>
-                        <button mat-flat-button type="button" class="danger" [disabled]="projectsStore.pending()" (click)="remove()">
-                            {{ "PROJECT.DELETE" | translate }}
+                        <button
+                            mat-flat-button
+                            type="button"
+                            class="danger"
+                            [disabled]="projectsStore.pending()"
+                            [matTooltip]="'PROJECT.DELETE' | translate"
+                            [attr.aria-label]="'PROJECT.DELETE' | translate"
+                            (click)="remove()"
+                        >
+                            <mat-icon>delete</mat-icon>
+                            <span class="action-label">{{ "PROJECT.DELETE" | translate }}</span>
                         </button>
                     }
                 </div>

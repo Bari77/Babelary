@@ -17,7 +17,11 @@
                         [attr.aria-expanded]="openLocale() === row.locale"
                         (click)="toggle(project.slug, row.locale)"
                     >
-                        <span class="lang-name"><app-locale-flag [code]="row.locale" />{{ localesStore.label(row.locale) }}</span>
+                        <span class="lang-name">
+                            <app-locale-flag [code]="row.locale" />
+                            <span class="lang-label">{{ localesStore.label(row.locale) }}</span>
+                            <span class="lang-code">{{ row.locale }}</span>
+                        </span>
                         <span class="lang-count">{{ row.covered() }} / {{ row.total }}</span>
                         <app-translation-meter
                             [translated]="row.translated"
@@ -62,7 +66,6 @@
                                         [pendingOpen]="file.pendingOpen"
                                         [chips]="false"
                                     />
-                                    <mat-icon>chevron_right</mat-icon>
                                 </a>
                             }
                         }

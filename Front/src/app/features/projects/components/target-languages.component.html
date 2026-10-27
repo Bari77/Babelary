@@ -26,9 +26,10 @@
         <mat-selection-list
             #availableList
             multiple
+            (scroll)="onBoardScroll($event, 'available')"
             (selectionChange)="onAvailableSelection(availableList)"
         >
-            @for (locale of lists().available; track locale.code) {
+            @for (locale of visibleAvailable(); track locale.code) {
                 <mat-list-option [value]="locale.code" togglePosition="before"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-list-option>
             }
         </mat-selection-list>
@@ -86,8 +87,8 @@
             <h3>{{ "PROJECT.TARGETS_PROJECT" | translate }}</h3>
             <span class="count">{{ lists().chosen.length }}</span>
         </header>
-        <mat-selection-list #projectList multiple (selectionChange)="onProjectSelection(projectList)">
-            @for (locale of lists().chosen; track locale.code) {
+        <mat-selection-list #projectList multiple (scroll)="onBoardScroll($event, 'chosen')" (selectionChange)="onProjectSelection(projectList)">
+            @for (locale of visibleChosen(); track locale.code) {
                 <mat-list-option [value]="locale.code" togglePosition="before"><app-locale-flag [code]="locale.code" />{{ locale.label }}</mat-list-option>
             }
         </mat-selection-list>

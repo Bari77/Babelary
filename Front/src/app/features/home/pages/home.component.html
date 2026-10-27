@@ -28,7 +28,13 @@
             </ng-container>
             <ng-container matColumnDef="sourceLocale">
                 <th mat-header-cell *matHeaderCellDef>{{ "PROJECT.SOURCE" | translate }}</th>
-                <td mat-cell *matCellDef="let project"><app-locale-flag [code]="project.sourceLocale" />{{ localesStore.label(project.sourceLocale) }}</td>
+                <td mat-cell *matCellDef="let project">
+                    <span class="source">
+                        <app-locale-flag [code]="project.sourceLocale" />
+                        <span class="source-label">{{ localesStore.label(project.sourceLocale) }}</span>
+                        <span class="source-code">{{ project.sourceLocale }}</span>
+                    </span>
+                </td>
             </ng-container>
             <ng-container matColumnDef="targetCount">
                 <th mat-header-cell *matHeaderCellDef>{{ "PROJECT.TARGETS" | translate }}</th>
@@ -44,7 +50,7 @@
                             [pending]="project.pending"
                             [pendingOpen]="project.pendingOpen"
                         />
-                        <span>{{ project.covered() }} / {{ project.total }}</span>
+                        <span class="key-count">{{ project.covered() }} / {{ project.total }}</span>
                     </div>
                 </td>
             </ng-container>

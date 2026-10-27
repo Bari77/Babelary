@@ -257,7 +257,10 @@ export class ProjectEditorComponent {
     }
 
     public dirty(): boolean {
-        return this.projectsStore.entries().some((entry) => this.controls.get(entry.keyId)?.value !== this.baseline(entry));
+        return this.projectsStore.entries().some((entry) => {
+            const control = this.controls.get(entry.keyId);
+            return control !== undefined && control.value !== this.baseline(entry);
+        });
     }
 
     public copySource(entry: TranslationEntry): void {

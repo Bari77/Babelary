@@ -199,6 +199,21 @@ mat-nav-list {
     color: var(--mat-sys-on-surface-variant);
 }
 
+@media (max-width: 600px) {
+    .crumb-locale .crumb-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    :host ::ng-deep .crumb-locale .locale-flag {
+        margin-inline-end: 0;
+    }
+}
+
 .toolbar-spacer {
     flex: 1;
 }

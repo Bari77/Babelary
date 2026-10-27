@@ -44,7 +44,7 @@
 .lang-row,
 .file-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 8.5rem minmax(7rem, 14rem) auto;
+    grid-template-columns: minmax(0, 1fr) 8.5rem 11.5rem auto;
     gap: 8px 12px;
     align-items: center;
     width: 100%;
@@ -63,11 +63,60 @@ button.lang-row,
     cursor: pointer;
 }
 
+.file-row {
+    grid-template-columns: minmax(0, 1fr) 8.5rem max-content;
+}
+
+.file-row app-translation-meter {
+    justify-self: end;
+}
+
 .lang-name {
     overflow: hidden;
     font: var(--mat-sys-body-medium);
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.lang-code {
+    display: none;
+}
+
+@media (max-width: 840px) {
+    .lang-row {
+        grid-template-columns: minmax(0, 1fr) max-content auto;
+    }
+
+    .lang-row app-translation-meter,
+    .lang-row > mat-icon {
+        justify-self: end;
+    }
+
+    .lang-row .lang-count {
+        display: none;
+    }
+
+    .lang-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .lang-code {
+        display: inline;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .file-row {
+        grid-template-columns: minmax(0, 1fr) max-content;
+    }
+
+    .file-row .lang-count {
+        display: none;
+    }
 }
 
 .lang-count {
@@ -79,7 +128,10 @@ button.lang-row,
 
 .files {
     display: grid;
-    padding-left: 16px;
+}
+
+.file-row .lang-name {
+    padding-left: 1rem;
 }
 
 .empty {
