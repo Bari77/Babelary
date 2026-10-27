@@ -1,37 +1,89 @@
+name: babelary-prod
+
 services:
-  postgres:
-    image: docker.io/library/postgres:17-alpine
+  db:
+    image: postgres:17-alpine
+    container_name: babelary-prod-db
+    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:?}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_USER: ${POSTGRES_USER:-babelary}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
       POSTGRES_DB: ${POSTGRES_DB:-babelary}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - babelary_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-babelary} -d ${POSTGRES_DB:-babelary}"]
+      interval: 5s
       timeout: 5s
-      retries: 12
-    restart: unless-stopped
+      retries: 5
+    networks:
+      - babelary_internal
 
   api:
-    image: ${REGISTRY:?}/babelary/api:${TAG:-latest}
+    image: ${REGISTRY}/babelary/api:${TAG:-latest}
+    container_name: babelary-prod-api
+    restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:80
-      ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB:-babelary};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Database: Host=db;Port=5432;Database=${POSTGRES_DB:-babelary};Username=${POSTGRES_USER:-babelary};Password=${POSTGRES_PASSWORD}
+      Cors__Origins__0: ${CORS_ORIGIN:?CORS_ORIGIN requis}
+    volumes:
+      - babelary_data_protection:/root/.aspnet/DataProtection-Keys
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
-    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+
+      # HTTPS (443)
+      - "traefik.http.routers.babelary-api-prod.rule=Host(`${API_HOST:?API_HOST requis}`)"
+      - "traefik.http.routers.babelary-api-prod.entrypoints=websecure"
+      - "traefik.http.routers.babelary-api-prod.tls=true"
+      - "traefik.http.routers.babelary-api-prod.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      - "traefik.http.services.babelary-api-prod.loadbalancer.server.port=80"
+      - "traefik.http.routers.babelary-api-prod.middlewares=${TRAEFIK_RATE_LIMIT_MIDDLEWARE:-rate-limit-global@file}"
+      - "traefik.docker.network=traefik_proxy"
+
+      # HTTP (80) → redirection HTTPS
+      - "traefik.http.routers.babelary-api-prod-http.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.babelary-api-prod-http.entrypoints=web"
+      - "traefik.http.routers.babelary-api-prod-http.middlewares=${TRAEFIK_HTTPS_REDIRECT_MIDDLEWARE:-redirect-to-https@file}"
+    networks:
+      - babelary_internal
+      - traefik_proxy
 
   web:
-    image: ${REGISTRY:?}/babelary/web:${TAG:-latest}
-    ports:
-      - "${WEB_PORT:-8080}:80"
+    image: ${REGISTRY}/babelary/web:${TAG:-latest}
+    container_name: babelary-prod-web
+    restart: always
     depends_on:
       - api
-    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_proxy"
+
+      # HTTPS (443)
+      - "traefik.http.routers.babelary-web-prod.rule=Host(`${WEB_HOST:?WEB_HOST requis}`)"
+      - "traefik.http.routers.babelary-web-prod.entrypoints=websecure"
+      - "traefik.http.routers.babelary-web-prod.tls=true"
+      - "traefik.http.routers.babelary-web-prod.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      - "traefik.http.services.babelary-web-prod.loadbalancer.server.port=80"
+      - "traefik.http.routers.babelary-web-prod.middlewares=${TRAEFIK_RATE_LIMIT_MIDDLEWARE:-rate-limit-global@file}"
+
+      # HTTP (80) → redirection HTTPS
+      - "traefik.http.routers.babelary-web-prod-http.rule=Host(`${WEB_HOST}`)"
+      - "traefik.http.routers.babelary-web-prod-http.entrypoints=web"
+      - "traefik.http.routers.babelary-web-prod-http.middlewares=${TRAEFIK_HTTPS_REDIRECT_MIDDLEWARE:-redirect-to-https@file}"
+    networks:
+      - babelary_internal
+      - traefik_proxy
 
 volumes:
-  postgres-data:
+  babelary_pg_data:
+  babelary_data_protection:
+
+networks:
+  babelary_internal:
+  traefik_proxy:
+    external: true
