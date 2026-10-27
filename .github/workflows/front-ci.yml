@@ -7,6 +7,10 @@ on:
             - ".github/workflows/front-ci.yml"
     workflow_dispatch:
 
+permissions:
+    contents: read
+    packages: read
+
 jobs:
     build:
         name: Build
@@ -22,7 +26,11 @@ jobs:
 
             - name: Install
               working-directory: Front
-              run: bun install --frozen-lockfile
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  printf '\n//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> .npmrc
+                  bun install --frozen-lockfile
 
             - name: Build
               working-directory: Front

@@ -11,6 +11,10 @@ on:
             - ".github/workflows/docker-wf.yml"
     workflow_dispatch:
 
+permissions:
+    contents: read
+    packages: read
+
 jobs:
     detect-version:
         runs-on: ubuntu-latest

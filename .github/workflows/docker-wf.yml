@@ -26,6 +26,9 @@ on:
 jobs:
     publish:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: read
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -46,8 +49,11 @@ jobs:
                   password: ${{ secrets.REGISTRY_PASSWORD }}
 
             - name: Build versioned image
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   docker build \
+                    --secret id=NODE_AUTH_TOKEN,env=NODE_AUTH_TOKEN \
                     -f ${{ inputs.directory }}/Dockerfile \
                     -t ${{ vars.REGISTRY }}/babelary/${{ inputs.image_name }}:${{ inputs.version }} \
                     --build-arg APP_ENV=${{ inputs.app_env }} \

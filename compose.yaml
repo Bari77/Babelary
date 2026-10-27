@@ -57,6 +57,8 @@ services:
     build:
       context: ./Front
       dockerfile: Containerfile
+      secrets:
+        - NODE_AUTH_TOKEN
     network_mode: host
     working_dir: /app
     environment:
@@ -74,3 +76,7 @@ services:
 volumes:
   postgres-data:
   nuget:
+
+secrets:
+  NODE_AUTH_TOKEN:
+    environment: NODE_AUTH_TOKEN

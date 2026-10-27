@@ -1,42 +1,43 @@
 {
-  "name": "front",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve --host 0.0.0.0 --port 4200 --poll 1000",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "i18n:push:sources": "node ../cli/bin/babelary.js push sources",
-    "i18n:push:translations": "node ../cli/bin/babelary.js push translations",
-    "i18n:pull": "node ../cli/bin/babelary.js pull"
-  },
-  "private": true,
-  "packageManager": "bun@1.4.3",
-  "dependencies": {
-    "@angular/cdk": "^21.2.14",
-    "@angular/common": "^21.2.0",
-    "@angular/compiler": "^21.2.0",
-    "@angular/core": "^21.2.0",
-    "@angular/forms": "^21.2.0",
-    "@angular/material": "^21.2.14",
-    "@angular/platform-browser": "^21.2.0",
-    "@angular/router": "^21.2.0",
-    "@fontsource/material-icons": "^5.3.0",
-    "@fontsource/roboto": "^5.3.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0",
-    "zone.js": "^0.16.3"
-  },
+    "name": "front",
+    "version": "0.0.0",
+    "scripts": {
+        "ng": "ng",
+        "start": "ng serve --host 0.0.0.0 --port 4200 --poll 1000",
+        "build": "ng build",
+        "watch": "ng build --watch --configuration development",
+        "test": "ng test",
+        "i18n:push:sources": "babelary push sources",
+        "i18n:push:translations": "babelary push translations",
+        "i18n:pull": "babelary pull"
+    },
+    "private": true,
+    "packageManager": "bun@1.4.3",
+    "dependencies": {
+        "@angular/cdk": "^21.2.14",
+        "@angular/common": "^21.2.0",
+        "@angular/compiler": "^21.2.0",
+        "@angular/core": "^21.2.0",
+        "@angular/forms": "^21.2.0",
+        "@angular/material": "^21.2.14",
+        "@angular/platform-browser": "^21.2.0",
+        "@angular/router": "^21.2.0",
+        "@fontsource/material-icons": "^5.3.0",
+        "@fontsource/roboto": "^5.3.0",
+        "@ngx-translate/core": "^17.0.0",
+        "@ngx-translate/http-loader": "^17.0.0",
+        "rxjs": "~7.8.0",
+        "tslib": "^2.3.0",
+        "zone.js": "^0.16.3"
+    },
     "devDependencies": {
         "@angular/build": "^21.2.28",
-    "@angular/cli": "^21.2.28",
-    "@angular/compiler-cli": "^21.2.0",
-    "jsdom": "^28.0.0",
-    "prettier": "^3.8.1",
-    "typescript": "~5.9.2",
-    "vitest": "^4.0.8"
-  }
+        "@angular/cli": "^21.2.28",
+        "@angular/compiler-cli": "^21.2.0",
+        "@bari77/babelary": "0.2.1",
+        "jsdom": "^28.0.0",
+        "prettier": "^3.8.1",
+        "typescript": "~5.9.2",
+        "vitest": "^4.0.8"
+    }
 }

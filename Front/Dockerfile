@@ -5,8 +5,11 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV BUN_INSTALL=/root/.bun
 ENV PATH=$BUN_INSTALL/bin:$PATH
 
-COPY Front/package.json Front/bun.lock ./
-RUN bun install --frozen-lockfile
+COPY Front/package.json Front/bun.lock Front/.npmrc ./
+RUN --mount=type=secret,id=NODE_AUTH_TOKEN \
+    printf '\n//npm.pkg.github.com/:_authToken=%s\n' "$(cat /run/secrets/NODE_AUTH_TOKEN)" >> .npmrc \
+    && bun install --frozen-lockfile \
+    && rm -f .npmrc
 
 COPY Front/ ./
 ARG VERSION
