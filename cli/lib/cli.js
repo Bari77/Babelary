@@ -593,14 +593,14 @@ async function request(config, token, method, urlPath, body) {
 
     if (method === "GET" && urlPath.includes("exportLocale")) {
         if (!response.ok) {
-            throw new Error(await errorMessage(response));
+            throw new Error(await errorMessage(response, config));
         }
 
         return Buffer.from(await response.arrayBuffer());
     }
 
     if (!response.ok) {
-        throw new Error(await errorMessage(response));
+        throw new Error(await errorMessage(response, config));
     }
 
     const text = await response.text();
@@ -611,13 +611,20 @@ async function request(config, token, method, urlPath, body) {
     return JSON.parse(text);
 }
 
-async function errorMessage(response) {
+async function errorMessage(response, config) {
     const text = await response.text();
+    let code = "ERR_INTERNAL";
     try {
-        return JSON.parse(text).Message || "ERR_INTERNAL";
+        code = JSON.parse(text).Message || "ERR_INTERNAL";
     } catch {
         return "ERR_INTERNAL";
     }
+
+    if (code === "ERR_NOT_FOUND") {
+        return `Project not found: ${config.project}. Check the project value in babelary.yml.`;
+    }
+
+    return code;
 }
 
 module.exports = { run, loadConfig };

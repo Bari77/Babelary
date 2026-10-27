@@ -1,6 +1,6 @@
 {
     "name": "@bari77/babelary",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Pushes and pulls translations for a Babelary instance.",
     "bin": {
         "babelary": "./bin/babelary.js"
