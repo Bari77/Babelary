@@ -14,6 +14,9 @@ public class ProjectDto
     /// <summary>Source locale, <c>xx-XX</c>.</summary>
     public string SourceLocale { get; set; } = "";
 
+    /// <summary>Relative path of a translation file, with <c>{locale}</c>, <c>{name}</c>, <c>{file}</c>, and <c>{source}</c>.</summary>
+    public string FilePattern { get; set; } = global::Core.Projects.FilePattern.Folder;
+
     /// <summary>Target locale codes, ordered by code.</summary>
     public string[] Targets { get; set; } = [];
 

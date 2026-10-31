@@ -72,6 +72,14 @@
                         <mat-error>{{ "ERROR.ERR_LOCALE_INVALID" | translate }}</mat-error>
                     }
                 </mat-form-field>
+                <mat-form-field>
+                    <mat-label>{{ "PROJECT.FILE_PATTERN" | translate }}</mat-label>
+                    <input matInput formControlName="filePattern" spellcheck="false" autocomplete="off" />
+                    <mat-hint>{{ "PROJECT.FILE_PATTERN_HINT" | translate }}</mat-hint>
+                    @if (form.controls.filePattern.hasError("required") || form.controls.filePattern.hasError("maxlength")) {
+                        <mat-error>{{ "ERROR.ERR_FILE_PATTERN_INVALID" | translate }}</mat-error>
+                    }
+                </mat-form-field>
                 @if (projectsStore.error()) {
                     <p class="form-error">{{ projectsStore.error() }}</p>
                 }

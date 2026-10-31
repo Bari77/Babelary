@@ -32,7 +32,8 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
             request.Slug,
             request.Name,
             request.SourceLocale,
-            token);
+            token,
+            request.FilePattern);
 
     /// <summary>Changes the display name and the source locale.</summary>
     [HttpPost("update")]
@@ -42,7 +43,8 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
             project,
             request.Name,
             request.SourceLocale,
-            token);
+            token,
+            request.FilePattern);
 
     /// <summary>Deletes source files and translations. Locales and members stay.</summary>
     [HttpPost("reset")]
@@ -207,6 +209,9 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
 
         /// <summary>Source locale, <c>xx-XX</c>.</summary>
         public string? SourceLocale { get; set; }
+
+        /// <summary>Relative file path. Empty keeps <c>{locale}/{name}.json</c>.</summary>
+        public string? FilePattern { get; set; }
     }
 
     /// <summary>Editable project fields.</summary>
@@ -217,6 +222,9 @@ public class ProjectsController(IProjects projects, IAccounts accounts) : Contro
 
         /// <summary>Source locale, <c>xx-XX</c>.</summary>
         public string? SourceLocale { get; set; }
+
+        /// <summary>Relative file path. Null leaves the saved pattern unchanged.</summary>
+        public string? FilePattern { get; set; }
     }
 
     /// <summary>Locales to add or remove.</summary>

@@ -122,6 +122,13 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("FilePattern")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasDefaultValue("{locale}/{name}.json");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)

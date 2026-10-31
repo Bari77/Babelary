@@ -6,6 +6,7 @@ export class Project {
         public slug: string,
         public name: string,
         public sourceLocale: string,
+        public filePattern: string,
         public targets: string[],
         public progress: LocaleProgress[],
         public targetCount: number,
@@ -25,6 +26,7 @@ export class Project {
             dto.slug,
             dto.name,
             dto.sourceLocale,
+            dto.filePattern || "{locale}/{name}.json",
             dto.targets ?? [],
             (dto.progress ?? []).map((row) => LocaleProgress.fromDto(row)),
             dto.targetCount,
@@ -44,6 +46,7 @@ export interface ProjectDto {
     slug: string;
     name: string;
     sourceLocale: string;
+    filePattern: string;
     targets: string[];
     progress: LocaleProgressDto[];
     targetCount: number;

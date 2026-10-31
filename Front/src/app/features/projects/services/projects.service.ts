@@ -23,11 +23,11 @@ export class ProjectsService extends BaseService {
         return this.httpGet(Project, "get", new HttpParams().set("project", project));
     }
 
-    public create(body: { slug: string; name: string; sourceLocale: string }): Observable<Project> {
+    public create(body: { slug: string; name: string; sourceLocale: string; filePattern?: string }): Observable<Project> {
         return this.httpPost(Project, "create", body);
     }
 
-    public update(project: string, body: { name: string; sourceLocale: string }): Observable<Project> {
+    public update(project: string, body: { name: string; sourceLocale: string; filePattern?: string }): Observable<Project> {
         return this.httpPost(Project, "update", body, new HttpParams().set("project", project));
     }
 

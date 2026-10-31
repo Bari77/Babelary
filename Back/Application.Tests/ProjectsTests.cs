@@ -439,16 +439,16 @@ public class ProjectsImplTests : IDisposable
         var export = await this.projects.ExportLocaleAsync(this.ownerId, "kert-front", "fr-FR", CancellationToken.None);
         Assert.Equal("fr-FR.zip", export.FileName);
         using var archive = new ZipArchive(new MemoryStream(export.Content), ZipArchiveMode.Read);
-        Assert.Equal(["account.json", "home.json"], archive.Entries.Select(entry => entry.FullName).ToArray());
+        Assert.Equal(["fr-FR/account.json", "fr-FR/home.json"], archive.Entries.Select(entry => entry.FullName).ToArray());
 
-        using var account = JsonDocument.Parse(ReadZip(archive, "account.json"));
+        using var account = JsonDocument.Parse(ReadZip(archive, "fr-FR/account.json"));
         Assert.Equal(["ACCOUNT"], account.RootElement.EnumerateObject().Select(property => property.Name).ToArray());
         var group = account.RootElement.GetProperty("ACCOUNT");
         Assert.Equal(["LOGIN", "PASSWORD"], group.EnumerateObject().Select(property => property.Name).ToArray());
         Assert.Equal(" Identifiant ", group.GetProperty("LOGIN").GetString());
         Assert.Equal("", group.GetProperty("PASSWORD").GetString());
 
-        using var home = JsonDocument.Parse(ReadZip(archive, "home.json"));
+        using var home = JsonDocument.Parse(ReadZip(archive, "fr-FR/home.json"));
         Assert.Equal("Accueil", home.RootElement.GetProperty("HOME").GetProperty("TITLE").GetString());
 
         var memberExport = await this.projects.ExportLocaleAsync(this.memberId, "kert-front", "fr-FR", CancellationToken.None);
@@ -461,7 +461,7 @@ public class ProjectsImplTests : IDisposable
         var source = await this.projects.ExportLocaleAsync(this.ownerId, "kert-front", "en-US", CancellationToken.None);
         Assert.Equal("en-US.zip", source.FileName);
         using var sourceArchive = new ZipArchive(new MemoryStream(source.Content), ZipArchiveMode.Read);
-        using var sourceAccount = JsonDocument.Parse(ReadZip(sourceArchive, "account.json"));
+        using var sourceAccount = JsonDocument.Parse(ReadZip(sourceArchive, "en-US/account.json"));
         Assert.Equal("User", sourceAccount.RootElement.GetProperty("ACCOUNT").GetProperty("LOGIN").GetString());
 
         var stranger = await Assert.ThrowsAsync<NotFoundException>(() =>
@@ -473,6 +473,7 @@ public class ProjectsImplTests : IDisposable
     public async Task Angular_catalog_keeps_dotted_ids_and_round_trips()
     {
         await this.projects.CreateAsync(this.ownerId, "gc-platform", "Platform", "en-US", CancellationToken.None);
+        await this.projects.UpdateAsync(this.ownerId, "gc-platform", "Platform", "en-US", CancellationToken.None, FilePattern.LocaleFile);
         await this.projects.AddTargetsAsync(this.ownerId, "gc-platform", ["fr-FR"], CancellationToken.None);
         var imported = await this.projects.ImportSourcesAsync(
             this.ownerId,

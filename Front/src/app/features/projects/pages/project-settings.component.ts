@@ -77,6 +77,10 @@ export class ProjectSettingsComponent {
             nonNullable: true,
             validators: [Validators.required, (control) => this.knownLocale(control)],
         }),
+        filePattern: new FormControl("{locale}/{name}.json", {
+            nonNullable: true,
+            validators: [Validators.required, Validators.maxLength(200)],
+        }),
     });
 
     private readonly sessionStore = inject(SessionStore);
@@ -99,7 +103,7 @@ export class ProjectSettingsComponent {
             if (!slug) {
                 this.creating.set(true);
                 this.appliedSlug = null;
-                this.form.reset({ slug: "", name: "", sourceLocale: "" });
+                this.form.reset({ slug: "", name: "", sourceLocale: "", filePattern: "{locale}/{name}.json" });
                 this.form.controls.slug.enable();
                 this.form.controls.sourceLocale.enable();
                 return;
@@ -121,6 +125,7 @@ export class ProjectSettingsComponent {
                 slug: project.slug,
                 name: project.name,
                 sourceLocale: project.sourceLocale,
+                filePattern: project.filePattern,
             });
             if (project.sourceLocaleLocked) {
                 this.form.controls.sourceLocale.disable();
@@ -241,6 +246,7 @@ export class ProjectSettingsComponent {
                 slug: value.slug,
                 name: value.name,
                 sourceLocale: value.sourceLocale,
+                filePattern: value.filePattern,
             });
             if (created) {
                 await this.router.navigate(["/projet", created.slug, "parametres"]);
@@ -252,6 +258,7 @@ export class ProjectSettingsComponent {
         const updated = await this.projectsStore.update(value.slug, {
             name: value.name,
             sourceLocale: value.sourceLocale,
+            filePattern: value.filePattern,
         });
         if (updated) {
             this.saved();

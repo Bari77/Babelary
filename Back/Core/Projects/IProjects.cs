@@ -14,10 +14,10 @@ public interface IProjects
     Task<ProjectDto> GetAsync(Guid accountId, string? project, CancellationToken token);
 
     /// <summary>Creates a project. Only the instance owner may call this.</summary>
-    Task<ProjectDto> CreateAsync(Guid accountId, string? slug, string? name, string? sourceLocale, CancellationToken token);
+    Task<ProjectDto> CreateAsync(Guid accountId, string? slug, string? name, string? sourceLocale, CancellationToken token, string? filePattern = null);
 
-    /// <summary>Changes the display name and, while no key exists, the source locale.</summary>
-    Task<ProjectDto> UpdateAsync(Guid accountId, string? project, string? name, string? sourceLocale, CancellationToken token);
+    /// <summary>Changes the display name, the file pattern, and, while no key exists, the source locale.</summary>
+    Task<ProjectDto> UpdateAsync(Guid accountId, string? project, string? name, string? sourceLocale, CancellationToken token, string? filePattern = null);
 
     /// <summary>Deletes source files, keys, and translations. Locales and members stay.</summary>
     Task<ProjectDto> ResetAsync(Guid accountId, string? project, CancellationToken token);

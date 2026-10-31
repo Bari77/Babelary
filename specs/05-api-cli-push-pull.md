@@ -14,24 +14,31 @@ Le propriétaire synchronise le dépôt sans ouvrir le site. Le CLI envoie les J
 
 ## Configuration locale
 
-Un fichier `babelary.yml`, à la racine du module qui contient les traductions, décrit le projet. Le jeton n'y figure pas.
+Un fichier `babelary.yml` ou `babelary.json`, à la racine du module qui contient les traductions, décrit le projet. Si les deux sont dans le même dossier, le JSON l'emporte. Le jeton n'y figure pas.
 
 ```yaml
 base_url: https://babelary.exemple
 project: kert-front
 source_locale: en-US
-base_path: ./src/assets/i18n
+base_path: ./src/locale
+files: "{locale}/{name}.json"
 ```
 
 Le jeton est la variable d'environnement `BABELARY_TOKEN`. S'il manque, le CLI s'arrête avant tout appel réseau et le dit.
 
 `project` est l'identifiant stable du projet, choisi à la création, distinct du nom affiché. Il ne change pas.
 
+`files` est le chemin relatif de chaque fichier. `{locale}` est obligatoire, une seule fois. `{name}` est le nom sans extension, `{file}` le nom complet, `{source}` la langue source. Un segment `*` vaut `{file}`, un segment `*.json` vaut `{name}.json`. Le motif se termine par `.json`, ou contient `{file}`.
+
+`layout: folder` est le raccourci de `{locale}/{name}.json`. `layout: locale` est le raccourci de `{locale}.json`. `files` l'emporte sur `layout`. Si ni l'un ni l'autre n'est écrit, le CLI reprend le motif enregistré sur le projet. Le même champ se règle dans les paramètres du site.
+
+Le serveur garde le nom de fichier (`home.json`, `en-US.json`). Le motif dit seulement où le placer sur le disque et dans l'archive. `{locale}/{name}.json` exporte `fr-FR/home.json`. `{locale}.json` exporte `fr-FR.json` à partir de `en-US.json`. `{name}.{locale}.json` exporte `home.fr-FR.json`.
+
 ## Commandes
 
 ### `babelary push sources`
 
-Lit `base_path/source_locale/*.json`. Pour chaque fichier :
+Lit les fichiers de `base_path` dont le chemin correspond au motif pour la langue source. Pour chaque fichier :
 
 - crée le fichier côté serveur s'il n'existe pas ;
 - crée les clés nouvelles avec une valeur vide dans chaque langue cible ;
@@ -44,7 +51,7 @@ La commande affiche le nombre de clés créées, modifiées et supprimées, par 
 
 ### `babelary push translations`
 
-Lit les dossiers des langues cibles sous `base_path`. Pour chaque fichier et chaque clé déjà connue :
+Lit, pour chaque langue cible, les fichiers de `base_path` qui correspondent au motif. Pour chaque fichier et chaque clé déjà connue :
 
 - enregistre la valeur locale si elle n'est pas vide ;
 - laisse la valeur serveur intacte si la valeur locale est vide, pour ne pas effacer le travail d'un traducteur avec un fichier encore troué ;
@@ -57,7 +64,7 @@ La langue source n'est pas lue par cette commande. Un membre ne met à jour que 
 
 ### `babelary pull`
 
-Écrit, pour chaque langue cible, `base_path/<locale>/<fichier>.json`. Le JSON reconstruit les groupes à partir des chemins de clés. L'ordre des clés suit l'ordre du fichier source.
+Écrit, pour chaque langue, le chemin donné par le motif sous `base_path`. Le JSON reconstruit les groupes à partir des chemins de clés. L'ordre des clés suit l'ordre du fichier source.
 
 Les valeurs « à traduire » sont écrites comme des chaînes vides, afin que le fichier ait les mêmes clés que la source.
 
@@ -73,7 +80,7 @@ Le CLI parle en HTTPS à `base_url`. Un échec d'authentification s'arrête tout
 
 Les commandes sont rejouables. Pousser deux fois le même dossier ne crée pas de doublon et ne change pas les statuts si le texte est le même.
 
-Le nom de fichier sert de jointure entre le disque et le serveur. `pet.json` local met à jour `pet.json` du projet.
+Le nom de fichier stocké sert de jointure entre le disque et le serveur. Avec `{locale}/{name}.json`, `en-US/pet.json` met à jour `pet.json` du projet. Si `files` ou `layout` est écrit, `push sources` enregistre ce motif sur le projet.
 
 ## Critères d'acceptation
 

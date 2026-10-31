@@ -83,6 +83,7 @@ public class BabelaryDbContext(DbContextOptions<BabelaryDbContext> options) : Db
             entity.Property(project => project.Slug).HasMaxLength(80).IsRequired();
             entity.Property(project => project.Name).HasMaxLength(120).IsRequired();
             entity.Property(project => project.SourceLocale).HasMaxLength(5).IsRequired();
+            entity.Property(project => project.FilePattern).HasMaxLength(200).IsRequired().HasDefaultValue(FilePattern.Folder);
             entity.HasIndex(project => project.Slug).IsUnique();
             entity.HasOne(project => project.Owner)
                 .WithMany()

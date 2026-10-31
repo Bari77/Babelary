@@ -54,7 +54,8 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
         string? slug,
         string? name,
         string? sourceLocale,
-        CancellationToken token)
+        CancellationToken token,
+        string? filePattern = null)
     {
         var owner = await db.Accounts.AsNoTracking().FirstOrDefaultAsync(account => account.Id == accountId, token)
             ?? throw new NotFoundException("ERR_NOT_FOUND");
@@ -79,6 +80,7 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
             Slug = normalizedSlug,
             Name = displayName,
             SourceLocale = locale,
+            FilePattern = FilePattern.Normalize(filePattern),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -101,7 +103,8 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
         string? project,
         string? name,
         string? sourceLocale,
-        CancellationToken token)
+        CancellationToken token,
+        string? filePattern = null)
     {
         var stored = await RequireOwnedAsync(accountId, project, token);
         var displayName = NormalizeName(name);
@@ -119,6 +122,11 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
 
         stored.Name = displayName;
         stored.SourceLocale = locale;
+        if (filePattern is not null)
+        {
+            stored.FilePattern = FilePattern.Normalize(filePattern);
+        }
+
         stored.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(token);
         return await CompleteAsync(stored, accountId, token);
@@ -566,6 +574,7 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
             Slug = project.Slug,
             Name = project.Name,
             SourceLocale = project.SourceLocale,
+            FilePattern = string.IsNullOrWhiteSpace(project.FilePattern) ? FilePattern.Folder : project.FilePattern,
             Targets = targets,
             TargetCount = targets.Length,
             Progress = [],

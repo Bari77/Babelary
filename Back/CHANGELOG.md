@@ -1,3 +1,7 @@
+## [v0.4.0] - 2026-10-31
+
+Chaque projet choisit le chemin de ses fichiers. Le motif par défaut `{locale}/{name}.json` place `home.json` dans `fr-FR/home.json`. `{locale}.json` renomme `en-US.json` en `fr-FR.json`. Le même motif se règle dans les paramètres du projet, dans `babelary.yml` (`files`) ou dans `babelary.json`.
+
 ## [v0.3.1] - 2026-10-31
 
 L'export d'une langue renomme un fichier `en-US.json` en `{langue}.json`. Les autres noms de fichiers restent.

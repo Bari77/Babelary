@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { style } = require("./style");
 const { unzip } = require("./zip");
+const { FOLDER, exportPath, fromLayout, match, normalize } = require("./pattern");
 
 const LOCALE = /^[a-z]{2}-[A-Z]{2}$/;
 
@@ -62,8 +63,9 @@ function writeHelp(io) {
     const row = (command, text) => `  ${out.accent(cell(command, 28))}${out.muted(text)}\n`;
     io.stdout.write(`${out.strong("babelary")}  ${out.muted("syncs a repository with a Babelary instance")}\n\n`);
     io.stdout.write(`  ${out.muted("The token is read from BABELARY_TOKEN.")}\n`);
-    io.stdout.write(`  ${out.muted("It does not belong in babelary.yml.")}\n`);
-    io.stdout.write(`  ${out.muted("layout: locale stores one <locale>.json in base_path.")}\n\n`);
+    io.stdout.write(`  ${out.muted("It does not belong in babelary.yml or babelary.json.")}\n`);
+    io.stdout.write(`  ${out.muted("files: {locale}/{name}.json places each file in a locale folder.")}\n`);
+    io.stdout.write(`  ${out.muted("Tokens: {locale} {source} {name} {file} and *.")}\n\n`);
     io.stdout.write(`${out.strong("Commands")}\n`);
     io.stdout.write(row("push sources", "uploads the source locale JSON files"));
     io.stdout.write(row("push translations", "uploads the target locale folders"));
@@ -77,9 +79,14 @@ function writeHelp(io) {
 function loadConfig(cwd) {
     let dir = path.resolve(cwd);
     for (;;) {
-        const candidate = path.join(dir, "babelary.yml");
-        if (fs.existsSync(candidate)) {
-            return parseConfig(fs.readFileSync(candidate, "utf8"), dir);
+        const json = path.join(dir, "babelary.json");
+        if (fs.existsSync(json)) {
+            return parseConfig(JSON.parse(fs.readFileSync(json, "utf8")), dir);
+        }
+
+        const yml = path.join(dir, "babelary.yml");
+        if (fs.existsSync(yml)) {
+            return parseConfig(parseYaml(fs.readFileSync(yml, "utf8")), dir);
         }
 
         const parent = path.dirname(dir);
@@ -90,10 +97,10 @@ function loadConfig(cwd) {
         dir = parent;
     }
 
-    throw new Error("babelary.yml was not found.");
+    throw new Error("babelary.yml or babelary.json was not found.");
 }
 
-function parseConfig(text, directory) {
+function parseYaml(text) {
     const values = {};
     for (const raw of text.split(/\r?\n/)) {
         const line = raw.trim();
@@ -112,30 +119,33 @@ function parseConfig(text, directory) {
             value = value.slice(1, -1);
         }
 
-        if (key === "token" || key === "api_token" || key === "babelary_token") {
-            throw new Error("Remove the token from babelary.yml. Use the BABELARY_TOKEN variable.");
-        }
-
         values[key] = value;
+    }
+
+    return values;
+}
+
+function parseConfig(values, directory) {
+    for (const key of ["token", "api_token", "babelary_token"]) {
+        if (values[key]) {
+            throw new Error("Remove the token from the project configuration. Use the BABELARY_TOKEN variable.");
+        }
     }
 
     for (const key of ["base_url", "project", "source_locale", "base_path"]) {
         if (!values[key]) {
-            throw new Error(`babelary.yml: ${key} is missing.`);
+            throw new Error(`Project configuration: ${key} is missing.`);
         }
     }
 
-    const layout = values.layout ?? "folder";
-    if (layout !== "folder" && layout !== "locale") {
-        throw new Error("babelary.yml: layout must be folder or locale.");
-    }
-
+    const explicit = values.files !== undefined || values.layout !== undefined;
     return {
-        baseUrl: values.base_url.replace(/\/+$/, ""),
+        baseUrl: String(values.base_url).replace(/\/+$/, ""),
         project: values.project,
         sourceLocale: values.source_locale,
         basePath: path.resolve(directory, values.base_path),
-        localeLayout: layout === "locale",
+        files: fromLayout(values.layout ?? "folder", values.files),
+        filesExplicit: explicit,
     };
 }
 
@@ -145,40 +155,34 @@ async function pushSources(config, token, args, io) {
         return 1;
     }
 
+    const pattern = await resolvePattern(config, token);
+    if (config.filesExplicit) {
+        await syncPattern(config, token, pattern);
+    }
+
+    const found = collect(config.basePath, pattern, config.sourceLocale, config.sourceLocale);
+    if (!fs.existsSync(config.basePath)) {
+        fail(io, `Folder not found: ${config.basePath}`);
+        return 1;
+    }
+
+    if (found.length === 0) {
+        fail(io, "No source files.");
+        return 1;
+    }
+
     const files = [];
     let invalid = false;
-    if (config.localeLayout) {
-        const loaded = readLocaleDocument(config.basePath, config.sourceLocale);
-        if (loaded.error) {
-            fail(io, loaded.error);
-            return 1;
+    for (const file of found) {
+        const content = fs.readFileSync(file.full, "utf8");
+        const problem = documentProblem(content);
+        if (problem) {
+            invalid = true;
+            fail(io, `${file.relative}: ${problem}, file not sent.`);
+            continue;
         }
 
-        files.push({ name: `${config.sourceLocale}.json`, content: loaded.content });
-    } else {
-        const directory = path.join(config.basePath, config.sourceLocale);
-        const names = jsonFiles(directory);
-        if (names === null) {
-            fail(io, `Source folder not found: ${directory}`);
-            return 1;
-        }
-
-        if (names.length === 0) {
-            fail(io, "No source files.");
-            return 1;
-        }
-
-        for (const name of names) {
-            const content = fs.readFileSync(path.join(directory, name), "utf8");
-            const problem = documentProblem(content);
-            if (problem) {
-                invalid = true;
-                fail(io, `${name}: ${problem}, file not sent.`);
-                continue;
-            }
-
-            files.push({ name, content });
-        }
+        files.push({ name: file.stored, content });
     }
 
     if (files.length === 0) {
@@ -253,8 +257,8 @@ async function pushTranslations(config, token, args, io) {
     );
     const targets = new Set(project.targets ?? []);
     const overwrite = args.includes("--overwrite-empty");
-    const folders = config.localeLayout ? localeJsonNames(config.basePath) : localeFolders(config.basePath);
-    if (folders === null) {
+    const pattern = config.filesExplicit ? config.files : (project.filePattern || config.files);
+    if (!fs.existsSync(config.basePath)) {
         fail(io, `Folder not found: ${config.basePath}`);
         return 1;
     }
@@ -262,39 +266,21 @@ async function pushTranslations(config, token, args, io) {
     const out = style(io.stdout);
     heading(io, "Translations", config.project);
     let failed = false;
-    const serverFile = `${config.sourceLocale}.json`;
-    for (const locale of folders) {
-        if (locale === config.sourceLocale || locale === project.sourceLocale) {
-            continue;
-        }
-
+    warnIgnoredLocales(config.basePath, pattern, project.sourceLocale, targets, io, out);
+    for (const locale of [...targets].sort((left, right) => left.localeCompare(right))) {
         const name = out.accent(cell(locale, 8));
-        if (!LOCALE.test(locale)) {
-            io.stdout.write(`  ${name}${out.warn("folder ignored")}\n`);
-            continue;
-        }
-
-        if (!targets.has(locale)) {
-            io.stdout.write(`  ${name}${out.warn("ignored, locale not assigned")}\n`);
-            continue;
-        }
-
-        const names = config.localeLayout ? [serverFile] : (jsonFiles(path.join(config.basePath, locale)) ?? []);
+        const found = collect(config.basePath, pattern, locale, project.sourceLocale);
         const files = [];
-        for (const fileName of names) {
-            const relative = config.localeLayout ? `${locale}.json` : `${locale}/${fileName}`;
-            const content = fs.readFileSync(
-                config.localeLayout ? path.join(config.basePath, `${locale}.json`) : path.join(config.basePath, locale, fileName),
-                "utf8",
-            );
+        for (const file of found) {
+            const content = fs.readFileSync(file.full, "utf8");
             const problem = documentProblem(content);
             if (problem) {
                 failed = true;
-                fail(io, `${relative}: ${problem}, file not sent.`);
+                fail(io, `${file.relative}: ${problem}, file not sent.`);
                 continue;
             }
 
-            files.push({ name: config.localeLayout ? serverFile : fileName, content });
+            files.push({ name: file.stored, content });
         }
 
         if (files.length === 0) {
@@ -331,6 +317,8 @@ async function pull(config, token, io) {
         `/api/v1/Projects/get?project=${encodeURIComponent(config.project)}`,
     );
     const locales = [project.sourceLocale, ...(project.targets ?? [])];
+    const serverPattern = project.filePattern || FOLDER;
+    const pattern = config.filesExplicit ? config.files : serverPattern;
     const out = style(io.stdout);
     heading(io, "Pull", config.project);
     let failed = false;
@@ -340,23 +328,16 @@ async function pull(config, token, io) {
             token,
             `/api/v1/Projects/exportLocale?project=${encodeURIComponent(config.project)}&locale=${encodeURIComponent(locale)}`,
         );
-        const files = unzip(archive).filter((file) => !file.name.includes("..") && !file.name.includes("/") && !file.name.includes("\\"));
-        if (config.localeLayout) {
-            if (files.length !== 1) {
+        const files = unzip(archive).filter((file) => !file.name.includes("..") && !file.name.includes("\\"));
+        for (const file of files) {
+            const stored = match(serverPattern, locale, project.sourceLocale, file.name) ?? (file.name.includes("/") ? null : file.name);
+            if (!stored) {
                 failed = true;
-                fail(io, `${locale}: locale layout expects one JSON file, got ${files.length}.`);
+                fail(io, `${locale}: ${file.name} does not match the file pattern.`);
                 continue;
             }
 
-            fs.writeFileSync(path.join(config.basePath, `${locale}.json`), files[0].content);
-            io.stdout.write(`  ${out.accent(cell(locale, 8))}${out.ok(`${locale}.json`)}\n`);
-            continue;
-        }
-
-        const directory = path.join(config.basePath, locale);
-        fs.mkdirSync(directory, { recursive: true });
-        for (const file of files) {
-            fs.writeFileSync(path.join(directory, file.name), file.content);
+            writeRelative(config.basePath, exportPath(pattern, locale, project.sourceLocale, stored), file.content);
         }
 
         io.stdout.write(`  ${out.accent(cell(locale, 8))}${out.ok(count(files.length, "file", "files"))}\n`);
@@ -403,53 +384,83 @@ async function status(config, token, io) {
     return missing ? 1 : 0;
 }
 
-function jsonFiles(directory) {
-    if (!fs.existsSync(directory)) {
-        return null;
+async function resolvePattern(config, token) {
+    if (config.filesExplicit) {
+        return config.files;
     }
 
-    return fs.readdirSync(directory, { withFileTypes: true })
-        .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
-        .map((entry) => entry.name)
-        .sort((left, right) => left.localeCompare(right));
+    const project = await call(config, token, "GET", `/api/v1/Projects/get?project=${encodeURIComponent(config.project)}`);
+    return project.filePattern || config.files;
 }
 
-function readLocaleDocument(directory, locale) {
-    const name = `${locale}.json`;
-    const filePath = path.join(directory, name);
-    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-        return { error: `Source file not found: ${filePath}` };
+async function syncPattern(config, token, pattern) {
+    const project = await call(config, token, "GET", `/api/v1/Projects/get?project=${encodeURIComponent(config.project)}`);
+    if (project.filePattern === pattern) {
+        return;
     }
 
-    const content = fs.readFileSync(filePath, "utf8");
-    const problem = documentProblem(content);
-    if (problem) {
-        return { error: `${name}: ${problem}, file not sent.` };
-    }
-
-    return { content };
+    await call(config, token, "POST", `/api/v1/Projects/update?project=${encodeURIComponent(config.project)}`, {
+        name: project.name,
+        sourceLocale: project.sourceLocale,
+        filePattern: pattern,
+    });
 }
 
-function localeJsonNames(directory) {
-    if (!fs.existsSync(directory)) {
-        return null;
-    }
-
-    return fs.readdirSync(directory, { withFileTypes: true })
-        .filter((entry) => entry.isFile() && entry.name.endsWith(".json") && LOCALE.test(entry.name.slice(0, -".json".length)))
-        .map((entry) => entry.name.slice(0, -".json".length))
-        .sort((left, right) => left.localeCompare(right));
+function collect(basePath, pattern, locale, sourceLocale) {
+    const depth = normalize(pattern).split("/").length;
+    const relative = [];
+    walkFiles(basePath, "", depth, relative);
+    return relative
+        .map((item) => ({ relative: item, stored: match(pattern, locale, sourceLocale, item), full: path.join(basePath, ...item.split("/")) }))
+        .filter((item) => item.stored)
+        .sort((left, right) => left.stored.localeCompare(right.stored));
 }
 
-function localeFolders(directory) {
-    if (!fs.existsSync(directory)) {
-        return null;
+function walkFiles(directory, relative, depth, found) {
+    if (depth < 1 || !fs.existsSync(directory)) {
+        return;
     }
 
-    return fs.readdirSync(directory, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-        .sort((left, right) => left.localeCompare(right));
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const next = relative ? `${relative}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+            walkFiles(path.join(directory, entry.name), next, depth - 1, found);
+        } else if (entry.isFile() && depth === 1 && entry.name.endsWith(".json")) {
+            found.push(next);
+        }
+    }
+}
+
+function writeRelative(basePath, relative, content) {
+    const parts = relative.split("/").filter((part) => part.length > 0);
+    if (parts.some((part) => part === "." || part === "..")) {
+        throw new Error(`Refusing to write ${relative}.`);
+    }
+
+    const target = path.resolve(basePath, ...parts);
+    const root = path.resolve(basePath);
+    const inside = path.relative(root, target);
+    if (inside.startsWith("..") || path.isAbsolute(inside)) {
+        throw new Error(`Refusing to write ${relative}.`);
+    }
+
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, content);
+}
+
+function warnIgnoredLocales(basePath, pattern, sourceLocale, targets, io, out) {
+    if (!normalize(pattern).startsWith("{locale}/") || !fs.existsSync(basePath)) {
+        return;
+    }
+
+    for (const entry of fs.readdirSync(basePath, { withFileTypes: true })) {
+        if (!entry.isDirectory() || entry.name === sourceLocale || targets.has(entry.name)) {
+            continue;
+        }
+
+        const label = out.accent(cell(entry.name, 8));
+        io.stdout.write(`  ${label}${out.warn(LOCALE.test(entry.name) ? "ignored, locale not assigned" : "folder ignored")}\n`);
+    }
 }
 
 function documentProblem(text) {

@@ -22,6 +22,9 @@ public class Project
     /// <summary>Source locale, <c>xx-XX</c>. Locked once a key exists.</summary>
     public string SourceLocale { get; set; } = "";
 
+    /// <summary>Relative path of a translation file. See <see cref="FilePattern"/>.</summary>
+    public string FilePattern { get; set; } = global::Core.Projects.FilePattern.Folder;
+
     /// <summary>Creation instant, UTC.</summary>
     public DateTime CreatedAt { get; set; }
 

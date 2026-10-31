@@ -65,7 +65,7 @@ export class ProjectsStore {
         }
     }
 
-    public async create(body: { slug: string; name: string; sourceLocale: string }): Promise<Project | null> {
+    public async create(body: { slug: string; name: string; sourceLocale: string; filePattern?: string }): Promise<Project | null> {
         this.pending.set(true);
         this.error.set(null);
         try {
@@ -81,7 +81,7 @@ export class ProjectsStore {
         }
     }
 
-    public async update(slug: string, body: { name: string; sourceLocale: string }): Promise<Project | null> {
+    public async update(slug: string, body: { name: string; sourceLocale: string; filePattern?: string }): Promise<Project | null> {
         this.pending.set(true);
         this.error.set(null);
         try {
