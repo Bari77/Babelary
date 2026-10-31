@@ -1,3 +1,7 @@
+## [v0.7.0] - 2026-10-31
+
+Les paramètres d'un projet règlent le chemin des fichiers de traduction.
+
 ## [v0.6.0] - 2026-10-27
 
 Le profil permet de choisir la langue du site, anglais ou français. Le choix est enregistré sur l'appareil. Sans choix, le site s'ouvre en anglais.
