@@ -1,3 +1,7 @@
+## [v0.3.1] - 2026-10-31
+
+L'export d'une langue renomme un fichier `en-US.json` en `{langue}.json`. Les autres noms de fichiers restent.
+
 ## [v0.3.0] - 2026-10-31
 
 Un catalogue Angular est lu et réécrit tel quel. Les jetons `{$nom}` sont contrôlés comme `{{nom}}`.

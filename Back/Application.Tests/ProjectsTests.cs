@@ -519,7 +519,7 @@ public class ProjectsImplTests : IDisposable
 
         var export = await this.projects.ExportLocaleAsync(this.ownerId, "gc-platform", "fr-FR", CancellationToken.None);
         using var archive = new ZipArchive(new MemoryStream(export.Content), ZipArchiveMode.Read);
-        using var document = JsonDocument.Parse(ReadZip(archive, "en-US.json"));
+        using var document = JsonDocument.Parse(ReadZip(archive, "fr-FR.json"));
         Assert.Equal("fr-FR", document.RootElement.GetProperty("locale").GetString());
         var translations = document.RootElement.GetProperty("translations");
         Assert.Equal("Modération", translations.GetProperty("core.breadcrumb.moderation").GetString());

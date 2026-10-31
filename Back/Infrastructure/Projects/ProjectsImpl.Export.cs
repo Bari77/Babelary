@@ -43,7 +43,7 @@ public partial class ProjectsImpl
                 var leaves = keys
                     .Where(key => key.FileId == file.Id)
                     .Select(key => new KeyValuePair<string, string>(key.Path, textByKey.GetValueOrDefault(key.Id) ?? ""));
-                var entry = archive.CreateEntry(file.Name, CompressionLevel.Optimal);
+                var entry = archive.CreateEntry(ExportName(stored.SourceLocale, code, file.Name), CompressionLevel.Optimal);
                 await using var entryStream = entry.Open();
                 await using var writer = new StreamWriter(entryStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
                 await writer.WriteAsync(file.Catalog == ProjectFile.AngularCatalog
@@ -58,4 +58,13 @@ public partial class ProjectsImpl
             Content = stream.ToArray(),
         };
     }
+
+    /// <summary>
+    /// A locale-layout file is stored under the source locale name, such as <c>en-US.json</c>.
+    /// The export of another locale renames that entry to <c>{locale}.json</c>. Other file names stay.
+    /// </summary>
+    private static string ExportName(string sourceLocale, string locale, string fileName)
+        => string.Equals(fileName, sourceLocale + ".json", StringComparison.Ordinal)
+            ? locale + ".json"
+            : fileName;
 }
