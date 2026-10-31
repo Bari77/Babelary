@@ -20,7 +20,7 @@ public partial class ProjectsImpl
             .AsNoTracking()
             .Where(file => file.ProjectId == stored.Id)
             .OrderBy(file => file.Name)
-            .Select(file => new { file.Id, file.Name })
+            .Select(file => new { file.Id, file.Name, file.Catalog })
             .ToListAsync(token);
         var keys = await db.ProjectKeys
             .AsNoTracking()
@@ -46,7 +46,9 @@ public partial class ProjectsImpl
                 var entry = archive.CreateEntry(file.Name, CompressionLevel.Optimal);
                 await using var entryStream = entry.Open();
                 await using var writer = new StreamWriter(entryStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-                await writer.WriteAsync(SourceDocument.Write(leaves));
+                await writer.WriteAsync(file.Catalog == ProjectFile.AngularCatalog
+                    ? SourceDocument.Write(leaves, code)
+                    : SourceDocument.Write(leaves));
             }
         }
 

@@ -15,69 +15,36 @@ public static class SourceDocument
 
     /// <summary>
     /// Returns the string leaves in document order. A group such as <c>ACCOUNT</c> is not a key.
+    /// An Angular catalog keeps each translation id whole, including dots.
     /// </summary>
     /// <param name="json">Raw JSON object.</param>
-    public static Dictionary<string, string> Read(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new BadRequestException("ERR_FILE_JSON_INVALID");
-        }
-
-        JsonDocument document;
-        try
-        {
-            document = JsonDocument.Parse(json);
-        }
-        catch (JsonException)
-        {
-            throw new BadRequestException("ERR_FILE_JSON_INVALID");
-        }
-
-        using (document)
-        {
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                throw new BadRequestException("ERR_FILE_JSON_INVALID");
-            }
-
-            var leaves = new Dictionary<string, string>(StringComparer.Ordinal);
-            Walk(document.RootElement, "", leaves, flatKeys: false);
-            return leaves;
-        }
-    }
+    public static Dictionary<string, string> Read(string? json) => Parse(json, allowFlatKeys: false).Leaves;
 
     /// <summary>
-    /// Reads a translation file. Nested objects and flat dotted keys such as <c>ACCOUNT.LOGIN</c> both count.
+    /// Reads a translation file. Nested objects, flat dotted keys, and Angular catalogs all count.
     /// </summary>
     /// <param name="json">Raw JSON object.</param>
-    public static Dictionary<string, string> ReadTranslations(string? json)
+    public static Dictionary<string, string> ReadTranslations(string? json) => Parse(json, allowFlatKeys: true).Leaves;
+
+    /// <summary>
+    /// Reads a source or translation file and records whether it is an Angular catalog.
+    /// </summary>
+    /// <param name="json">Raw JSON object.</param>
+    /// <param name="allowFlatKeys">When true, a dotted property name whose value is a string is one key.</param>
+    public static ParsedDocument Parse(string? json, bool allowFlatKeys)
     {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new BadRequestException("ERR_FILE_JSON_INVALID");
-        }
-
-        JsonDocument document;
-        try
-        {
-            document = JsonDocument.Parse(json);
-        }
-        catch (JsonException)
-        {
-            throw new BadRequestException("ERR_FILE_JSON_INVALID");
-        }
-
+        var document = Open(json);
         using (document)
         {
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            var root = document.RootElement;
+            if (IsAngular(root))
             {
-                throw new BadRequestException("ERR_FILE_JSON_INVALID");
+                return new ParsedDocument(ReadAngular(root), Angular: true);
             }
 
             var leaves = new Dictionary<string, string>(StringComparer.Ordinal);
-            Walk(document.RootElement, "", leaves, flatKeys: true);
-            return leaves;
+            Walk(root, "", leaves, allowFlatKeys);
+            return new ParsedDocument(leaves, Angular: false);
         }
     }
 
@@ -85,8 +52,14 @@ public static class SourceDocument
     /// Rebuilds a JSON object from dotted paths. The first occurrence of each group fixes its order.
     /// </summary>
     /// <param name="leaves">String leaves in source order. Missing translations are empty strings.</param>
-    public static string Write(IEnumerable<KeyValuePair<string, string>> leaves)
+    /// <param name="angularLocale">When set, writes an Angular catalog for this locale instead of nested JSON.</param>
+    public static string Write(IEnumerable<KeyValuePair<string, string>> leaves, string? angularLocale = null)
     {
+        if (angularLocale is not null)
+        {
+            return WriteAngular(angularLocale, leaves);
+        }
+
         var root = new Node();
         foreach (var (path, value) in leaves)
         {
@@ -110,6 +83,103 @@ public static class SourceDocument
         }))
         {
             WriteNode(writer, root);
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    private static JsonDocument Open(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new BadRequestException("ERR_FILE_JSON_INVALID");
+        }
+
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(json);
+        }
+        catch (JsonException)
+        {
+            throw new BadRequestException("ERR_FILE_JSON_INVALID");
+        }
+
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            document.Dispose();
+            throw new BadRequestException("ERR_FILE_JSON_INVALID");
+        }
+
+        return document;
+    }
+
+    private static bool IsAngular(JsonElement root)
+    {
+        var locale = false;
+        var translations = false;
+        var count = 0;
+        foreach (var property in root.EnumerateObject())
+        {
+            count++;
+            if (property.NameEquals("locale") && property.Value.ValueKind == JsonValueKind.String)
+            {
+                locale = true;
+            }
+            else if (property.NameEquals("translations") && property.Value.ValueKind == JsonValueKind.Object)
+            {
+                translations = true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return count == 2 && locale && translations;
+    }
+
+    private static Dictionary<string, string> ReadAngular(JsonElement root)
+    {
+        var leaves = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var property in root.GetProperty("translations").EnumerateObject())
+        {
+            if (property.Name.Length == 0 || property.Name.Length > MaxPathLength)
+            {
+                throw new BadRequestException("ERR_FILE_KEY_INVALID");
+            }
+
+            if (property.Value.ValueKind != JsonValueKind.String)
+            {
+                throw new BadRequestException("ERR_FILE_LEAF_NOT_STRING");
+            }
+
+            leaves[property.Name] = property.Value.GetString() ?? "";
+        }
+
+        return leaves;
+    }
+
+    private static string WriteAngular(string locale, IEnumerable<KeyValuePair<string, string>> leaves)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions
+        {
+            Indented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        }))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("locale", locale);
+            writer.WritePropertyName("translations");
+            writer.WriteStartObject();
+            foreach (var (path, value) in leaves)
+            {
+                writer.WriteString(path, value);
+            }
+
+            writer.WriteEndObject();
+            writer.WriteEndObject();
         }
 
         return Encoding.UTF8.GetString(stream.ToArray());
@@ -207,3 +277,8 @@ public static class SourceDocument
         }
     }
 }
+
+/// <summary>Leaves of one JSON file, and whether that file is an Angular catalog.</summary>
+/// <param name="Leaves">String values in document order.</param>
+/// <param name="Angular">True when the file is <c>{ locale, translations }</c>.</param>
+public readonly record struct ParsedDocument(Dictionary<string, string> Leaves, bool Angular);

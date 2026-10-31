@@ -70,7 +70,7 @@ public partial class ProjectsImpl
         Dictionary<string, string> leaves;
         try
         {
-            leaves = SourceDocument.ReadTranslations(file?.Content);
+            leaves = SourceDocument.Parse(file?.Content, allowFlatKeys: true).Leaves;
         }
         catch (BadRequestException exception)
         {

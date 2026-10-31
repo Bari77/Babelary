@@ -11,8 +11,17 @@ public class ProjectFile
     /// <summary>Project that owns this file.</summary>
     public Guid ProjectId { get; set; }
 
+    /// <summary>Nested JSON, the default for existing files.</summary>
+    public const string NestedCatalog = "nested";
+
+    /// <summary>Angular catalog: <c>locale</c> plus a flat <c>translations</c> map.</summary>
+    public const string AngularCatalog = "angular";
+
     /// <summary>File name, without a directory.</summary>
     public string Name { get; set; } = "";
+
+    /// <summary><see cref="NestedCatalog"/> or <see cref="AngularCatalog"/>.</summary>
+    public string Catalog { get; set; } = NestedCatalog;
 
     /// <summary>Creation instant, UTC.</summary>
     public DateTime CreatedAt { get; set; }

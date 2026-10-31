@@ -51,7 +51,7 @@ Quand la source change, les traductions non vides de cette clé passent à « à
 
 ## Jetons
 
-Un jeton est `{{nom}}`. Le nom contient des lettres, des chiffres, `_` et `.`.
+Un jeton est `{{nom}}` ou, dans un catalogue Angular, `{$nom}`. Le nom contient des lettres, des chiffres, `_` et, pour `{{nom}}`, `.`.
 
 La liste des jetons de la traduction doit être la même que celle de la source, avec le même nombre d'occurrences. L'ordre peut changer.
 

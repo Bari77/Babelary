@@ -469,6 +469,63 @@ public class ProjectsImplTests : IDisposable
         Assert.Equal("ERR_NOT_FOUND", stranger.Message);
     }
 
+    [Fact]
+    public async Task Angular_catalog_keeps_dotted_ids_and_round_trips()
+    {
+        await this.projects.CreateAsync(this.ownerId, "gc-platform", "Platform", "en-US", CancellationToken.None);
+        await this.projects.AddTargetsAsync(this.ownerId, "gc-platform", ["fr-FR"], CancellationToken.None);
+        var imported = await this.projects.ImportSourcesAsync(
+            this.ownerId,
+            "gc-platform",
+            [
+                new SourceFileUpload
+                {
+                    Name = "en-US.json",
+                    Content = """
+                        {
+                          "locale": "en-US",
+                          "translations": {
+                            "core.breadcrumb.moderation": "Moderation",
+                            "core.breadcrumb.moderation.users": "Users {$PH}"
+                          }
+                        }
+                        """,
+                },
+            ],
+            CancellationToken.None);
+
+        Assert.Equal(2, imported.Files[0].Created);
+        var saved = await this.projects.ImportTranslationsAsync(
+            this.ownerId,
+            "gc-platform",
+            "fr-FR",
+            [
+                new SourceFileUpload
+                {
+                    Name = "en-US.json",
+                    Content = """
+                        {
+                          "locale": "fr-FR",
+                          "translations": {
+                            "core.breadcrumb.moderation": "Modération",
+                            "core.breadcrumb.moderation.users": "Utilisateurs {$PH}"
+                          }
+                        }
+                        """,
+                },
+            ],
+            CancellationToken.None);
+        Assert.Equal(2, saved.Files[0].Updated);
+
+        var export = await this.projects.ExportLocaleAsync(this.ownerId, "gc-platform", "fr-FR", CancellationToken.None);
+        using var archive = new ZipArchive(new MemoryStream(export.Content), ZipArchiveMode.Read);
+        using var document = JsonDocument.Parse(ReadZip(archive, "en-US.json"));
+        Assert.Equal("fr-FR", document.RootElement.GetProperty("locale").GetString());
+        var translations = document.RootElement.GetProperty("translations");
+        Assert.Equal("Modération", translations.GetProperty("core.breadcrumb.moderation").GetString());
+        Assert.Equal("Utilisateurs {$PH}", translations.GetProperty("core.breadcrumb.moderation.users").GetString());
+    }
+
     private static string ReadZip(ZipArchive archive, string name)
     {
         var entry = archive.GetEntry(name);

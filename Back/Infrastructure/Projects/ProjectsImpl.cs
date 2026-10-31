@@ -360,10 +360,10 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
             return new ImportFileDto { Name = name, Error = "ERR_FILE_NAME_INVALID" };
         }
 
-        Dictionary<string, string> leaves;
+        ParsedDocument parsed;
         try
         {
-            leaves = SourceDocument.Read(file?.Content);
+            parsed = SourceDocument.Parse(file?.Content, allowFlatKeys: false);
         }
         catch (BadRequestException exception)
         {
@@ -386,11 +386,12 @@ public partial class ProjectsImpl(BabelaryDbContext db, IPasswordHasher<Account>
             db.ProjectFiles.Add(existing);
         }
 
+        existing.Catalog = parsed.Angular ? ProjectFile.AngularCatalog : ProjectFile.NestedCatalog;
         var byPath = existing.Keys.ToDictionary(key => key.Path, StringComparer.Ordinal);
         var created = 0;
         var updated = 0;
         var ordinal = 0;
-        foreach (var (path, source) in leaves)
+        foreach (var (path, source) in parsed.Leaves)
         {
             if (!byPath.Remove(path, out var key))
             {

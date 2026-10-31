@@ -2,7 +2,7 @@
 
 Bureau de traduction auto-hébergé. Les traducteurs ouvrent le site, voient les clés et remplissent les langues qu'on leur a confiées. Ils n'ont pas accès au dépôt Git. Le propriétaire pousse les sources avec le CLI, récupère les traductions, puis concatène chaque langue en un JSON pour l'application.
 
-Une instance, hébergée par le propriétaire du serveur. Le premier compte créé à l'installation est le seul à pouvoir créer des projets. Les membres arrivent par une invitation. Le format v1 est le JSON imbriqué, feuilles de type chaîne, locales `xx-XX`.
+Une instance, hébergée par le propriétaire du serveur. Le premier compte créé à l'installation est le seul à pouvoir créer des projets. Les membres arrivent par une invitation. Le format historique est le JSON imbriqué. Un catalogue Angular (`locale` + `translations`, identifiants à points, jetons `{$nom}`) est conservé tel quel. Les locales suivent `xx-XX`.
 
 Le détail est dans les specs.
 

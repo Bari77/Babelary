@@ -103,6 +103,7 @@ public class BabelaryDbContext(DbContextOptions<BabelaryDbContext> options) : Db
         modelBuilder.Entity<ProjectFile>(entity =>
         {
             entity.Property(file => file.Name).HasMaxLength(80).IsRequired();
+            entity.Property(file => file.Catalog).HasMaxLength(16).IsRequired().HasDefaultValue(ProjectFile.NestedCatalog);
             entity.HasIndex(file => new { file.ProjectId, file.Name }).IsUnique();
             entity.HasOne(file => file.Project)
                 .WithMany(project => project.Files)
